@@ -184,7 +184,7 @@
 <header>
   <div class="wrap">
     <a class="logo" href="#top" aria-label="NEXTON 안전톡톡이"><img src="logo-icon.webp" alt="NEXTON 로고" width="82" height="40"></a>
-    <div class="ttl"><h1>안전톡톡이</h1><p class="slogan">더 안전한 현장을 위한 스마트한 점검</p></div>
+    <div class="ttl"><h1 class="notranslate" translate="no">안전톡톡이</h1><p class="slogan">더 안전한 현장을 위한 스마트한 점검</p></div>
     <span class="tag">시제품 v0.3 · AI 검색</span>
     <label class="lang notranslate" translate="no"><span class="sr">언어 선택 / Language / 语言</span><select id="langSel" aria-label="언어 선택 / Language / 语言"><option value="ko">한국어</option><option value="en">English</option><option value="zh-CN">中文</option></select></label>
     <nav aria-label="바로가기"><a href="#chatSection">챗봇</a><a href="#checkSection">점검표</a></nav>
@@ -205,7 +205,7 @@
     <div class="chat">
       <div class="chat-head">
         <img class="avatar" src="logo-avatar.webp" alt="" aria-hidden="true">
-        <div><div class="name">안전톡톡이</div><div class="status" id="statusTxt">● 점검표 등록됨</div></div>
+        <div><div class="name notranslate" translate="no">안전톡톡이</div><div class="status" id="statusTxt">● 점검표 등록됨</div></div>
         <label class="aitg" id="aiLbl"><input type="checkbox" id="aiToggle"><span id="aiTxt">AI 검색</span></label>
         <button class="clear" type="button" id="clearChat">대화 지우기</button>
       </div>
@@ -1718,7 +1718,7 @@ function reply(q) {
   return answerFor(cat, q, follow);
 }
 function greeting() {
-  return `<p>안녕하세요, <b>안전톡톡이</b>예요. 오늘 어떤 작업을 하시나요?</p>
+  return `<p>안녕하세요, <b class="notranslate" translate="no">안전톡톡이</b>예요. 오늘 어떤 작업을 하시나요?</p>
     <p>기계설비·전기·소방·정보통신·금속구조물·창호·신재생에너지(태양광·지열)와 토목·시공 공종을 고르거나 "스프링클러 점검할 때 뭘 확인해?"처럼 편하게 물어보세요. 기본 모드는 등록된 정부 점검표 내용만, <b>AI 검색</b> 모드는 구글 검색 출처까지 붙여서 알려 드려요.</p>${catButtons()}`;
 }
 function help() {
@@ -1927,7 +1927,7 @@ function buildPrintDoc(cat) {
   const none = cat.items.length - ok - bad - na;
   const site = $("#site").value.trim(), date = $("#date").value;
   return `<div class="pr">
-    <div class="pr-head"><img src="logo-icon.webp" alt="NEXTON"><div class="t"><b>안전톡톡이</b> 작업 전 안전점검표<br>더 안전한 현장을 위한 스마트한 점검</div></div>
+    <div class="pr-head"><img src="logo-icon.webp" alt="NEXTON"><div class="t"><b class="notranslate" translate="no">안전톡톡이</b> 작업 전 안전점검표<br>더 안전한 현장을 위한 스마트한 점검</div></div>
     <h1>${esc(cat.label)}</h1>
     <div class="pr-info">
       ${cat.lead ? `<div>${esc(cat.lead.replace(/<[^>]+>/g, ""))}</div>` : ""}
