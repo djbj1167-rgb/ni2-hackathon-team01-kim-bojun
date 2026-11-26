@@ -1,681 +1,712 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>안전톡 체크 | 안전관리 체크리스트 Q&A</title>
-<meta name="description" content="작업 전 점검 체크리스트를 질문으로 찾고, 점검 결과를 저장하는 시제품">
+<title>작업전 체크봇 | 작업 전 안전점검 챗봇</title>
+<meta name="description" content="작업 전 안전점검 챗봇. 질문하면 정부 점검표에서 점검항목과 출처를 찾아 답하고, 바로 점검표로 체크할 수 있는 시제품">
 <style>
-  :root{
-    --bg:#f4f6f8; --card:#fff; --ink:#1c2733; --sub:#5b6875; --line:#dde3e9;
-    --main:#0b6b5a; --main-dark:#084c40; --main-soft:#e3f3ef;
-    --warn:#a85a00; --warn-soft:#fff1dc; --sample:#5b3fa8; --sample-soft:#efe9fb;
-    --ok:#1b7f3b; --ok-soft:#e1f4e7; --na:#546270; --na-soft:#e9edf1; --bad:#b3261e;
+  :root {
+    --bg: #f4f6f8; --card: #fff; --ink: #1d2530; --sub: #5b6675; --line: #dde3ea;
+    --brand: #0b6bcb; --brand-soft: #e8f1fb; --ok: #1a7f37; --ok-soft: #e6f4ea;
+    --bad: #c62828; --bad-soft: #fdecea; --na: #6b7280; --na-soft: #eef0f3; --warn: #b26a00; --warn-soft: #fff4e0;
+    --botbg: #f1f4f8;
   }
-  *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
-  body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
-    line-height:1.55;font-size:16px}
-  header{background:var(--main);color:#fff;padding:14px 16px}
-  header .wrap{max-width:760px;margin:0 auto}
-  header h1{margin:0;font-size:1.25rem}
-  header p{margin:2px 0 0;font-size:.85rem;opacity:.9}
-  nav{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
-  nav .wrap{max-width:760px;margin:0 auto;display:flex}
-  nav button{flex:1;border:0;background:none;padding:13px 8px;font:inherit;font-weight:700;
-    color:var(--sub);border-bottom:3px solid transparent;cursor:pointer}
-  nav button[aria-selected="true"]{color:var(--main);border-bottom-color:var(--main)}
-  main{max-width:760px;margin:0 auto;padding:14px 14px 60px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
-  h2{font-size:1.05rem;margin:0 0 10px}
-  label,.lbl{display:block;font-weight:700;font-size:.92rem;margin:12px 0 6px}
-  .chips{display:flex;flex-wrap:wrap;gap:8px}
-  .chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:9px 14px;font:inherit;
-    cursor:pointer;min-height:44px}
-  .chip[aria-pressed="true"]{background:var(--main);border-color:var(--main);color:#fff;font-weight:700}
-  select,input[type=text],input[type=date],textarea{width:100%;font:inherit;padding:11px 12px;border:1.5px solid var(--line);
-    border-radius:10px;background:#fff;color:var(--ink);min-height:46px}
-  textarea{resize:vertical;min-height:84px}
-  :focus-visible{outline:3px solid #f0a500;outline-offset:2px}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  @media(max-width:520px){.row{grid-template-columns:1fr}}
-  .examples{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-  .ex{border:1px dashed var(--main);background:var(--main-soft);color:var(--main-dark);border-radius:8px;
-    padding:8px 10px;font:inherit;font-size:.88rem;cursor:pointer;text-align:left;min-height:40px}
-  .btn{display:inline-block;border:0;background:var(--main);color:#fff;font:inherit;font-weight:700;
-    padding:13px 18px;border-radius:10px;cursor:pointer;min-height:48px}
-  .btn:hover{background:var(--main-dark)}
-  .btn.ghost{background:#fff;color:var(--main);border:1.5px solid var(--main)}
-  .btn.danger{background:#fff;color:var(--bad);border:1.5px solid var(--bad)}
-  .btn.block{width:100%;margin-top:16px}
-  .badge{display:inline-block;font-size:.76rem;font-weight:700;padding:3px 9px;border-radius:999px;margin-right:6px;vertical-align:middle}
-  .b-sample{background:var(--sample-soft);color:var(--sample)}
-  .b-warn{background:var(--warn-soft);color:var(--warn)}
-  .b-ok{background:var(--ok-soft);color:var(--ok)}
-  .summary{background:var(--main-soft);border-radius:10px;padding:12px 14px;margin:6px 0 12px}
-  .notfound{background:var(--warn-soft);border:1px solid #f0c98c;border-radius:10px;padding:14px}
-  ul.check{list-style:none;margin:0;padding:0}
-  ul.check li{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
-  ul.check li.hit{border-color:var(--main);background:#f7fcfb}
-  .itxt{font-weight:700;margin-bottom:8px}
-  .itxt small{font-weight:400;color:var(--sub);display:block}
-  .seg{display:flex;gap:6px;flex-wrap:wrap}
-  .seg button{flex:1;min-width:84px;border:1.5px solid var(--line);background:#fff;border-radius:8px;font:inherit;
-    padding:9px 6px;cursor:pointer;min-height:44px}
-  .seg button[aria-pressed="true"].s-ok{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:700}
-  .seg button[aria-pressed="true"].s-na{background:var(--na);border-color:var(--na);color:#fff;font-weight:700}
-  .seg button[aria-pressed="true"].s-no{background:var(--warn);border-color:var(--warn);color:#fff;font-weight:700}
-  .src{border-left:4px solid var(--sample);background:#faf8fe;padding:10px 12px;border-radius:0 8px 8px 0;
-    font-size:.88rem;margin-top:12px}
-  .count{font-size:.9rem;color:var(--sub);margin-top:10px}
-  .disc{font-size:.82rem;color:var(--sub);margin-top:14px}
-  .empty{text-align:center;color:var(--sub);padding:30px 10px}
-  .saved-item{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:#fff}
-  .saved-item h3{margin:0 0 4px;font-size:1rem}
-  .saved-item .meta{font-size:.85rem;color:var(--sub)}
-  .saved-item .acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-  .saved-item .acts .btn{padding:9px 14px;min-height:42px;font-size:.9rem}
-  .detail{margin-top:10px;font-size:.92rem}
-  .detail div{padding:6px 0;border-top:1px solid var(--line)}
-  .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#1c2733;color:#fff;
-    padding:12px 18px;border-radius:10px;font-size:.92rem;display:none;z-index:20;max-width:90%}
-  .hidden{display:none !important}
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", "Noto Sans KR", sans-serif; font-size: 16px; line-height: 1.55; word-break: keep-all; overflow-wrap: anywhere; }
+  header { background: #12304f; color: #fff; padding: 12px 16px; position: sticky; top: 0; z-index: 10; }
+  header .wrap { display: flex; align-items: center; gap: 10px; }
+  header h1 { font-size: 1.2rem; margin: 0; }
+  header .tag { font-size: .75rem; background: rgba(255,255,255,.15); padding: 2px 8px; border-radius: 99px; }
+  header nav { margin-left: auto; display: flex; gap: 6px; }
+  header nav a { color: #fff; text-decoration: none; font-size: .85rem; padding: 6px 10px; border-radius: 99px; background: rgba(255,255,255,.12); }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  main { padding: 12px; }
+  .notice { background: var(--warn-soft); color: #6b4200; border: 1px solid #f3d29b; border-radius: 10px; padding: 10px 12px; font-size: .88rem; margin-bottom: 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .card h2 { font-size: 1.1rem; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+  .step { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--brand); color: #fff; font-size: .85rem; flex: none; }
+  .hint { color: var(--sub); font-size: .88rem; margin: 0 0 12px; }
+  .row { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
+  @media (min-width: 640px) { .row { grid-template-columns: 2fr 1fr; } }
+  label { font-size: .85rem; color: var(--sub); display: block; margin-bottom: 4px; }
+  input[type=text], input[type=date] { width: 100%; font: inherit; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+  input:focus, button:focus-visible { outline: 3px solid #9cc7f2; outline-offset: 1px; }
+  .btn { font: inherit; border: 0; border-radius: 10px; padding: 11px 16px; cursor: pointer; min-height: 44px; background: var(--brand); color: #fff; font-weight: 600; white-space: nowrap; }
+  .btn.ghost { background: #fff; color: var(--brand); border: 1px solid var(--brand); }
+  .btn.small { padding: 8px 12px; min-height: 38px; font-size: .9rem; }
 
-  /* ===== 챗봇 ===== */
-  .chat{display:flex;flex-direction:column;height:calc(100vh - 230px);min-height:420px}
-  .chat-log{flex:1;overflow-y:auto;padding:4px 2px 8px;display:flex;flex-direction:column;gap:10px}
-  .msg{max-width:88%;padding:11px 13px;border-radius:14px;font-size:.95rem;word-break:keep-all;overflow-wrap:anywhere}
-  .msg.bot{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
-  .msg.user{align-self:flex-end;background:var(--main);color:#fff;border-bottom-right-radius:4px;white-space:pre-wrap}
-  .msg ol{margin:8px 0 6px;padding-left:20px}
-  .msg li{margin-bottom:4px}
-  .msg li.hit{color:var(--main-dark);font-weight:700;background:var(--main-soft);border-radius:6px;padding:2px 6px;margin-left:-6px}
-  .msg .badges{margin-top:6px}
-  .msg .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-  .msg .acts button{border:1.5px solid var(--main);background:#fff;color:var(--main-dark);border-radius:999px;
-    font:inherit;font-size:.86rem;padding:7px 12px;cursor:pointer;min-height:38px}
-  .msg .acts button.primary{background:var(--main);color:#fff;font-weight:700}
-  .msg small{color:var(--sub)}
-  .typing{align-self:flex-start;color:var(--sub);font-size:.9rem;padding:6px 10px}
-  .chat-quick{display:flex;gap:6px;overflow-x:auto;padding:8px 0;flex-wrap:nowrap}
-  .chat-quick button{flex:none;border:1px dashed var(--main);background:var(--main-soft);color:var(--main-dark);
-    border-radius:999px;font:inherit;font-size:.86rem;padding:7px 12px;cursor:pointer;min-height:38px}
-  .chat-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
-  .chat-head h2{margin:0}
-  .ai-toggle{display:flex;align-items:center;gap:8px;font-size:.86rem;font-weight:700;margin:0;cursor:pointer}
-  .ai-toggle input{width:20px;height:20px;min-height:0;accent-color:var(--main)}
-  .ai-toggle.off{color:var(--sub);cursor:not-allowed}
-  .b-ai{background:#e6f0ff;color:#1a56b0}
-  .chat-form{display:flex;gap:8px}
-  .chat-form input{flex:1}
-  .chat-form .btn{min-height:46px;padding:0 18px}
+  /* ---- 챗봇 ---- */
+  .chat { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; background: #fff; }
+  .chat-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); background: #fafbfc; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: #12304f; color: #fff; display: grid; place-items: center; font-size: .7rem; font-weight: 700; flex: none; }
+  .chat-head .name { font-weight: 700; line-height: 1.2; }
+  .chat-head .status { font-size: .75rem; color: var(--ok); }
+  .chat-head { flex-wrap: wrap; }
+  .aitg { margin: 0 0 0 auto; display: flex; align-items: center; gap: 6px; font-size: .82rem; font-weight: 700; color: var(--brand); cursor: pointer; }
+  .aitg input { width: 18px; height: 18px; accent-color: var(--brand); }
+  .aitg.off { color: var(--sub); cursor: not-allowed; font-weight: 500; }
+  .chat-head .clear { margin-left: 0; font: inherit; font-size: .8rem; background: none; border: 1px solid var(--line); border-radius: 99px; padding: 4px 10px; color: var(--sub); cursor: pointer; }
+  .log { height: min(62vh, 560px); overflow-y: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
+  .msg { display: flex; gap: 8px; max-width: 100%; }
+  .msg .bubble { padding: 10px 13px; border-radius: 16px; max-width: min(86%, 620px); }
+  .msg.bot .bubble { background: var(--botbg); border-top-left-radius: 4px; }
+  .msg.user { justify-content: flex-end; }
+  .msg.user .bubble { background: var(--brand); color: #fff; border-top-right-radius: 4px; }
+  .msg.bot .avatar { width: 28px; height: 28px; font-size: .6rem; margin-top: 2px; }
+  .bubble p { margin: 0 0 6px; }
+  .bubble p:last-child { margin-bottom: 0; }
+  .bubble ol, .bubble ul { margin: 6px 0; padding-left: 20px; }
+  .bubble li { margin-bottom: 6px; }
+  .bubble .grp { font-size: .72rem; color: var(--sub); display: block; }
+  .badge { display: inline-block; font-size: .72rem; padding: 1px 8px; border-radius: 99px; background: var(--brand-soft); color: var(--brand); margin: 3px 4px 0 0; text-decoration: none; }
+  .badge.law { background: #f1eafd; color: #5b2bb5; }
+  .badge.check { background: var(--warn-soft); color: var(--warn); }
+  .badge.ok { background: var(--ok-soft); color: var(--ok); }
+  .badge.ai { background: #e6f0ff; color: #1a56b0; }
+  .srcbox { border-left: 4px solid #1a56b0; background: #f3f7ff; border-radius: 0 10px 10px 0; padding: 8px 12px; margin: 8px 0 4px; font-size: .88rem; }
+  .srcbox.none { border-left-color: var(--warn); background: var(--warn-soft); }
+  .srcbox ol { margin: 4px 0 2px; padding-left: 20px; }
+  .srcbox a { color: #1a56b0; word-break: break-all; }
+  .bubble sup a { color: var(--brand); text-decoration: none; font-weight: 700; }
+  .mini { font-size: .8rem; color: var(--sub); }
+  .warnbox { background: var(--warn-soft); border: 1px solid #f3d29b; border-radius: 10px; padding: 8px 10px; margin: 4px 0; }
+  .quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .quick button { font: inherit; font-size: .85rem; border: 1px solid var(--brand); color: var(--brand); background: #fff; border-radius: 99px; padding: 6px 11px; cursor: pointer; min-height: 36px; }
+  .quick button.primary { background: var(--brand); color: #fff; }
+  .quick button .nodata { font-size: .7rem; color: var(--warn); margin-left: 3px; }
+  .typing span { display: inline-block; width: 7px; height: 7px; margin: 0 2px; border-radius: 50%; background: #9aa5b1; animation: blink 1s infinite; }
+  .typing span:nth-child(2) { animation-delay: .15s; } .typing span:nth-child(3) { animation-delay: .3s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+  .composer { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--line); background: #fafbfc; }
+  .composer input { flex: 1; border-radius: 99px; }
+  .composer .btn { border-radius: 99px; }
+  .suggest { display: flex; gap: 6px; overflow-x: auto; padding: 8px 10px 0; background: #fafbfc; border-top: 1px solid var(--line); scrollbar-width: none; }
+  .suggest::-webkit-scrollbar { display: none; }
+  .suggest button { flex: none; font: inherit; font-size: .8rem; border: 1px solid var(--line); background: #fff; border-radius: 99px; padding: 5px 10px; cursor: pointer; color: var(--ink); }
+
+  /* ---- 점검표 ---- */
+  .ck-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .ck-title { font-weight: 700; }
+  .ck-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  .ck-item { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: #fff; }
+  .ck-item.s-ok { border-color: #a8d8b5; background: var(--ok-soft); }
+  .ck-item.s-bad { border-color: #f2b8b5; background: var(--bad-soft); }
+  .ck-item.s-na { background: var(--na-soft); }
+  .ck-text { margin-bottom: 8px; }
+  .ck-text small { color: var(--sub); }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .seg button { font: inherit; font-size: .9rem; border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 9px 4px; min-height: 44px; cursor: pointer; }
+  .seg button[aria-pressed=true].ok { background: var(--ok); color: #fff; border-color: var(--ok); }
+  .seg button[aria-pressed=true].bad { background: var(--bad); color: #fff; border-color: var(--bad); }
+  .seg button[aria-pressed=true].na { background: var(--na); color: #fff; border-color: var(--na); }
+  .fix { margin-top: 8px; }
+  .summary { position: sticky; bottom: 0; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; box-shadow: 0 -4px 14px rgba(0,0,0,.06); margin-top: 14px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; margin-bottom: 8px; }
+  .stat { border-radius: 10px; padding: 6px 2px; font-size: .78rem; }
+  .stat b { display: block; font-size: 1.25rem; }
+  .stat.ok { background: var(--ok-soft); color: var(--ok); }
+  .stat.bad { background: var(--bad-soft); color: var(--bad); }
+  .stat.na { background: var(--na-soft); color: var(--na); }
+  .stat.none { background: #f4f6f8; color: var(--sub); }
+  .badlist { font-size: .9rem; margin: 6px 0 0; padding-left: 18px; color: var(--bad); }
+  @media (max-width: 639px) { #badBox { max-height: 96px; overflow-y: auto; } .log { height: 58vh; } }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .empty { color: var(--sub); text-align: center; padding: 24px 8px; border: 1px dashed var(--line); border-radius: 12px; }
+  footer { padding: 8px 16px 40px; color: var(--sub); font-size: .85rem; }
+  footer h3 { font-size: .95rem; color: var(--ink); }
+  footer ol { padding-left: 18px; }
+  .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #1d2530; color: #fff; padding: 10px 16px; border-radius: 99px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 20; }
+  .toast.show { opacity: 1; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>
 </head>
 <body>
 <header>
   <div class="wrap">
-    <h1>안전톡 체크</h1>
-    <p>작업 전 점검 체크리스트 Q&amp;A · 점검 결과 저장 (시제품)</p>
+    <h1>작업전 체크봇</h1>
+    <span class="tag">시제품 v0.3 · AI 검색</span>
+    <nav aria-label="바로가기"><a href="#chatSection">챗봇</a><a href="#checkSection">점검표</a></nav>
   </div>
 </header>
-<nav aria-label="화면 이동">
-  <div class="wrap" role="tablist">
-    <button role="tab" id="tab-ask" aria-selected="true" aria-controls="view-ask">질문하기</button>
-    <button role="tab" id="tab-chat" aria-selected="false" aria-controls="view-chat">챗봇</button>
-    <button role="tab" id="tab-saved" aria-selected="false" aria-controls="view-saved">저장된 점검 <span id="savedCount"></span></button>
+
+<main class="wrap">
+  <div class="notice" role="note">
+    해커톤 시제품입니다. <b>기본 모드</b>는 앱에 등록된 정부 점검표 내용으로만 답하고, 자료에 없으면 "확인 필요"라고 답합니다.
+    <b>AI 검색 모드</b>는 등록 점검표를 먼저 근거로 삼고, 부족한 부분은 구글 검색 결과를 출처 링크와 함께 보여줍니다. AI는 틀릴 수 있어요.
+    <b>최종 판단은 현장 안전관리자가 합니다.</b>
   </div>
-</nav>
 
-<main>
-  <!-- 1. 입력 화면 + 결과 화면 -->
-  <section id="view-ask" role="tabpanel" aria-labelledby="tab-ask">
-    <div class="card">
-      <h2>1. 작업 정보 입력</h2>
-      <div class="lbl" id="lblTrade">공종 선택</div>
-      <div class="chips" id="trades" role="group" aria-labelledby="lblTrade"></div>
-
-      <label for="task">작업 선택</label>
-      <select id="task"></select>
-
-      <label for="question">질문 입력</label>
-      <textarea id="question" placeholder="예: 고소작업 전에 뭘 확인해야 해?"></textarea>
-      <div class="examples" id="examples" aria-label="예시 질문"></div>
-
-      <div class="row">
-        <div>
-          <label for="siteName">점검 작업명 (저장용)</label>
-          <input type="text" id="siteName" placeholder="예: OO현장 2층 배관 작업" maxlength="60">
-        </div>
-        <div>
-          <label for="checkDate">점검 일자</label>
-          <input type="date" id="checkDate">
-        </div>
-      </div>
-      <button class="btn block" id="askBtn">질문하기</button>
-    </div>
-
-    <div id="result" class="hidden" aria-live="polite"></div>
-  </section>
-
-  
-  <!-- 챗봇 -->
-  <section id="view-chat" role="tabpanel" aria-labelledby="tab-chat" class="hidden">
-    <div class="card chat">
+  <!-- 기능 1: 체크리스트 Q&A 챗봇 -->
+  <section class="card" id="chatSection" aria-labelledby="qa-title">
+    <h2 id="qa-title"><span class="step">1</span>체크리스트 Q&amp;A 챗봇</h2>
+    <p class="hint">오늘 할 작업이나 궁금한 점을 물어보세요. 이어서 물어봐도 앞 대화의 작업을 기억합니다. 오른쪽 위 <b>AI 검색</b>을 켜면 구글 검색 출처까지 붙여서 답해요.</p>
+    <div class="chat">
       <div class="chat-head">
-        <h2>안전톡 챗봇 <span class="badge b-sample">샘플 데이터</span></h2>
-        <label class="ai-toggle" id="aiToggleLbl"><input type="checkbox" id="aiToggle"> <span id="aiToggleTxt">AI 답변 모드</span></label>
+        <div class="avatar" aria-hidden="true">체크</div>
+        <div><div class="name">체크봇</div><div class="status">● 점검표 9종 작업 등록됨</div></div>
+        <label class="aitg" id="aiLbl"><input type="checkbox" id="aiToggle"><span id="aiTxt">AI 검색</span></label>
+        <button class="clear" type="button" id="clearChat">대화 지우기</button>
       </div>
-      <div class="chat-log" id="chatLog" role="log" aria-live="polite" aria-label="챗봇 대화"></div>
-      <div class="chat-quick" id="chatQuick" aria-label="추천 질문"></div>
-      <form class="chat-form" id="chatForm" autocomplete="off">
-        <input type="text" id="chatInput" placeholder="예: 용접할 때 화재 예방은?" maxlength="200" aria-label="챗봇에게 질문하기">
-        <button type="submit" class="btn">보내기</button>
+      <div class="log" id="log" role="log" aria-live="polite" aria-label="대화 내용"></div>
+      <div class="suggest" id="suggest" aria-label="추천 질문"></div>
+      <form class="composer" id="composer" autocomplete="off">
+        <label class="sr" for="q">메시지</label>
+        <input id="q" type="text" placeholder="예) 지붕 위 태양광 작업 전에 뭘 확인해?" enterkeyhint="send">
+        <button class="btn" type="submit">보내기</button>
       </form>
     </div>
   </section>
 
-  <!-- 2. 저장된 점검 -->
-  <section id="view-saved" role="tabpanel" aria-labelledby="tab-saved" class="hidden">
-    <div class="card">
-      <h2>저장된 점검 목록</h2>
-      <p class="disc" style="margin-top:0">이 기기의 브라우저에만 저장돼요. 서버로 보내지 않아요.</p>
-      <div id="savedList"></div>
+  <!-- 기능 2: 작업 전 점검표 체크 -->
+  <section class="card" aria-labelledby="ck-title" id="checkSection">
+    <h2 id="ck-title"><span class="step">2</span>작업 전 점검표 체크</h2>
+    <div class="row">
+      <div>
+        <label for="site">현장명 <small>(예시는 샘플 데이터)</small></label>
+        <input id="site" type="text" placeholder="예) 샘플 현장 A - 초등학교 체육관 소방공사">
+      </div>
+      <div>
+        <label for="date">점검 날짜</label>
+        <input id="date" type="date">
+      </div>
+    </div>
+    <p class="hint">챗봇에서 "점검표로 체크하기"를 누르면 여기에 열립니다. 각 항목을 <b>적정 / 부적정 / 해당없음</b>으로 체크하세요.</p>
+    <div id="checklist"><div class="empty">아직 열린 점검표가 없어요. 챗봇에게 작업을 말해 보세요.</div></div>
+    <div class="summary" id="summary" hidden>
+      <div class="stats">
+        <div class="stat ok"><b id="cOk">0</b>적정</div>
+        <div class="stat bad"><b id="cBad">0</b>부적정</div>
+        <div class="stat na"><b id="cNa">0</b>해당없음</div>
+        <div class="stat none"><b id="cNone">0</b>미체크</div>
+      </div>
+      <div id="badBox"></div>
+      <div class="actions">
+        <button class="btn small" id="copyBtn" type="button">결과 복사</button>
+        <button class="btn small ghost" id="resetBtn" type="button">체크 초기화</button>
+        <button class="btn small ghost" id="backChat" type="button">챗봇으로</button>
+      </div>
     </div>
   </section>
-
-  <p class="disc">
-    ※ 이 앱은 해커톤 시제품이에요. 화면의 체크항목은 <b>샘플 데이터</b>이며 ㈜동호엔지니어링의 실제 체크리스트나 법령 기준이 아니에요.
-    현장 최종 판단은 안전관리자가 하고, 실제 기준은 반드시 원문 자료로 확인하세요.
-  </p>
 </main>
+
+<footer class="wrap">
+  <h3>등록된 자료 (출처)</h3>
+  <ol id="srcList"></ol>
+  <p>AI 검색 모드의 답변은 구글 검색 결과와 위 등록 자료를 근거로 하며, 사용한 검색 출처 링크를 답변마다 표시합니다. AI는 틀릴 수 있으므로 원문 확인이 필요합니다.<br>
+  항목 문구는 원문을 짧게 다듬은 것이며 원문 대조가 필요합니다. 쪽수는 원문에 인쇄된 쪽 번호입니다. 법령 조항은 현행 여부 확인 필요.<br>
+  만든 팀: 2026 NI2.0 AID 해커톤 1팀 넥스톤(NEXTON) · 강원도립대학교 스마트건설토목과 · 배정 기업 ㈜동호엔지니어링 과제</p>
+</footer>
+
 <div class="toast" id="toast" role="status"></div>
 
 <script>
-/* ===========================================================
-   샘플 데이터 (실습용 예시). 실제 기업 데이터·법령 기준이 아님.
-   기업 제공 자료를 받으면 이 DATA를 교체한다.
-   =========================================================== */
-const DATA_LABEL = "샘플 데이터";
-const SOURCE_NOTE = {
-  type: "샘플 데이터",
-  text: "팀이 만든 실습용 예시입니다. 출처 문서와 대조하기 전이라 근거는 '확인 필요'입니다.",
-  ref: "참고 후보(대조 전): 국토교통부 서울지방국토관리청 「건설공사 안전관리 매뉴얼(2024)」, 2024-06-11"
+/* ===== 1. 지식 자료: 등록된 점검표 (실제 공개 문서에서 발췌) ===== */
+const SOURCES = {
+  D1: {
+    name: "1~50억 중소 건설현장을 위한 사망사고 기인물 자율 안전점검표",
+    short: "기인물 점검표",
+    org: "고용노동부 건설산재예방정책과",
+    date: "2022년 5월",
+    url: "https://www.moel.go.kr/local/cheonan/common/downloadFile.do?bbs_id=LOCAL5&bbs_seq=20230400920&file_seq=20230401533"
+  },
+  D2: {
+    name: "50억 이상 시공현장 자율점검표 (위험성평가 중심)",
+    short: "50억 이상 점검표",
+    org: "안전보건공단 전북서부지사",
+    date: "2024-05-20 게시",
+    url: "https://oshri.kosha.or.kr/kosha/intro/westernJeonbukBranch_A.do?articleNo=450383&attachNo=255907&mode=download",
+    note: "50억 이상 현장 대상. 관련 법 조항 참고용"
+  }
 };
 
-const TRADES = ["기계설비","전기","소방","정보통신","공통"];
-
-const TASKS = [
-  { id:"pipe", trade:"기계설비", name:"배관 설치",
-    keywords:["배관","파이프","밸브","용접","압력","시험","중량물","설치"],
-    items:[
-      "작업 구역 출입 통제 표시를 했는가",
-      "작업자 보호구(안전모, 장갑, 보안경) 착용 상태를 확인했는가",
-      "중량 자재 운반 방법과 양중 장비 상태를 확인했는가",
-      "용접·절단 작업이 있으면 화기 작업 준비를 확인했는가",
-      "압력 시험 전 접속부와 밸브 상태를 확인했는가"
-    ]},
-  { id:"boiler", trade:"기계설비", name:"보일러·펌프 설치",
-    keywords:["보일러","펌프","가스","환기","연통","냉난방","설치","중량물"],
-    items:[
-      "설치 위치의 환기 상태와 작업 공간을 확인했는가",
-      "가스·연료 배관 접속부 누출 점검 계획이 있는가",
-      "전원 차단과 잠금(표시) 조치를 확인했는가",
-      "중량 설비 운반·거치 경로와 인원 배치를 확인했는가"
-    ]},
-  { id:"wire", trade:"전기", name:"전기 배선 작업",
-    keywords:["배선","전선","전기","차단기","정전","잠금","감전","접지","케이블"],
-    items:[
-      "작업 전 전원 차단과 정전 확인을 했는가",
-      "차단기에 잠금·꼬리표 등 재투입 방지 조치를 했는가",
-      "절연 보호구와 절연 공구 상태를 확인했는가",
-      "젖은 장소나 금속 구조물 근처 작업 여부를 확인했는가",
-      "작업 종료 후 재송전 전 인원 철수를 확인했는가"
-    ]},
-  { id:"panel", trade:"전기", name:"분전반 점검",
-    keywords:["분전반","배전반","분전","차단기","감전","접지","점검"],
-    items:[
-      "분전반 전면 작업 공간이 확보되어 있는가",
-      "활선 접근 한계와 작업 방법을 팀원과 공유했는가",
-      "접지 상태 확인 방법을 정했는가",
-      "작업 중 비상 연락 체계를 확인했는가"
-    ]},
-  { id:"sprinkler", trade:"소방", name:"스프링클러 설치",
-    keywords:["스프링클러","소화","헤드","소방","배관","시험","천장","설치"],
-    items:[
-      "천장 내부 작업 구간의 추락·낙하 위험을 확인했는가",
-      "배관 지지와 고정 상태를 확인했는가",
-      "기존 소방설비를 정지할 경우 사전 협의와 표시를 했는가",
-      "통수·압력 시험 시 누수 대비 조치를 했는가"
-    ]},
-  { id:"hot", trade:"소방", name:"화기 작업 (용접·절단)",
-    keywords:["화기","용접","절단","불티","화재","소화기","감시자","불꽃"],
-    items:[
-      "작업 주변 가연물을 제거하거나 덮었는가",
-      "소화기가 작업 장소에 비치되어 있는가",
-      "화재 감시자를 지정했는가",
-      "작업 종료 후 잔불 여부를 확인할 시간과 방법을 정했는가"
-    ]},
-  { id:"cable", trade:"정보통신", name:"케이블 포설",
-    keywords:["케이블","통신","포설","천장","사다리","랙","배관","통신선"],
-    items:[
-      "사다리·작업발판 상태와 설치 방법을 확인했는가",
-      "기존 전력선과 통신선의 이격 여부를 확인했는가",
-      "케이블 운반·포설 중 걸림 위험 구간을 표시했는가",
-      "천장·덕트 내부 작업 시 조명과 비상 연락 방법을 확인했는가"
-    ]},
-  { id:"height", trade:"공통", name:"고소작업",
-    keywords:["고소","추락","사다리","안전대","비계","발판","높은","개구부","안전고리"],
-    items:[
-      "작업발판·사다리·비계의 설치와 고정 상태를 확인했는가",
-      "안전대를 착용하고 걸이 위치를 확인했는가",
-      "개구부와 단부에 덮개·난간이 있는가",
-      "하부 통행 제한과 낙하물 방지 조치를 했는가",
-      "기상 상태(바람, 비 등)에 따른 작업 가능 여부를 확인했는가"
-    ]},
-  { id:"tbm", trade:"공통", name:"작업 전 안전회의(TBM)",
-    keywords:["tbm","회의","위험성","보호구","작업 전","작업전","교육","건강","컨디션","조회"],
-    items:[
-      "오늘 작업 내용과 순서를 전원에게 설명했는가",
-      "작업별 위험요인과 대책을 함께 확인했는가",
-      "보호구 착용과 건강 상태를 확인했는가",
-      "비상 연락처와 대피 경로를 공유했는가"
-    ]}
+/* items: [그룹, 문구, 쪽] */
+const CATS = [
+  {
+    id: "weld", label: "용접·화기", src: "D1",
+    keys: ["용접","용단","불티","불꽃","화기","화재","가스","산소","lpg","아세틸렌","절단","배관","방화포","소화기","화재감시자","토치"],
+    lead: "용접·용단 같은 화기작업 전에는 가연물 제거, 불티 비산 방지, 소화기·화재감시자 배치를 확인해야 합니다.",
+    items: [
+      ["가연물 관리","작업장 안의 위험물·가연물 사용·보관 현황을 파악한다.",46],
+      ["가연물 관리","도료(페인트), 스티로폼 등 가연성 자재는 화재가 번질 우려가 없는 장소에 따로 보관한다.",46],
+      ["가연물 관리","화재위험작업에 대한 작업계획을 세운다.",46],
+      ["가연물 관리","화재에 대비한 비상조치계획을 세워 모든 작업자에게 알리고 긴급대피훈련을 한다.",46],
+      ["가연물 관리","화재위험 작업자에게 특별안전보건교육을 한다.",46],
+      ["가연물 관리","가연물이 있는 장소에서는 흡연을 금지한다.",46],
+      ["가스용기 관리","산소, LPG 등 가스 용기는 넘어질 위험이 없는 곳에 둔다.",46],
+      ["가스용기 관리","가스 용기 사용 전 밸브 등 주요 부위의 가스 누출 여부를 확인한다.",46],
+      ["가스용기 관리","쓰지 않는 가스용기는 밸브를 잠그고 호스를 뗀 뒤 환기가 잘되는 지상에 보관한다.",46],
+      ["용접·용단 작업","작업 전 가스호스가 손상될 우려가 없는지 확인한다.",46],
+      ["용접·용단 작업","불티가 튈 수 있는 곳에 가연물이 없는지 확인하고, 치울 수 없는 가연물은 용접방화포로 덮는다. (15m 높이 용접 시 불티는 최대 11m까지 날아감)",46],
+      ["용접·용단 작업","불티비산방지덮개와 불꽃받이를 알맞은 위치에 둔다.",46],
+      ["용접·용단 작업","용접·용단 작업자의 자격증 보유를 확인하고 안전모·앞치마·내열장갑·용접보안경 착용을 확인한다.",46],
+      ["용접·용단 작업","용접·용단 장소 가까이에 전용 소화기를 두고 화재감시자를 배치한다.",46]
+    ]
+  },
+  {
+    id: "confined", label: "밀폐공간", src: "D1",
+    keys: ["밀폐","맨홀","질식","중독","산소농도","산소 농도","유해가스","황화수소","일산화탄소","탄산가스","이산화탄소","환기","송기마스크","상하수도","하수","갈탄","숯탄","양생","정화조","피트","저수조"],
+    lead: "밀폐공간에 들어가기 전에는 산소·유해가스 농도를 재서 적정공기인지 확인하고, 외부 감시인과 송기마스크를 준비해야 합니다.",
+    items: [
+      ["공통","밀폐공간 입구에 출입금지 표지를 붙이고 무단출입을 막는다.",47],
+      ["공통","밀폐공간 작업 시 외부에 감시인을 두고 무전기 등으로 소통할 수 있게 한다.",47],
+      ["공통","사고 시 119 구조대가 오기 전, 공기호흡기·산소마스크 없이 절대 구조하러 들어가지 않도록 교육한다.",47],
+      ["겨울철 콘크리트 양생","보온 양생이 필요하면 갈탄·숯탄 대신 전기열풍기를 쓴다.",47],
+      ["겨울철 콘크리트 양생","어쩔 수 없이 갈탄·숯탄을 쓰다가 밀폐공간에 들어가야 하면 송기마스크 등 보호구를 반드시 착용한다.",47],
+      ["겨울철 콘크리트 양생","갈탄·숯탄 난로와 밀폐공간 근처에서 쉬지 않도록 한다.",47],
+      ["맨홀·상하수도 공사","작업 전·작업 중 산소와 유해가스 농도를 재서 적정공기인지 확인한다. (산소 18.0~23.5%, 황화수소 10ppm 미만, 탄산가스 1.5% 미만, 일산화탄소 30ppm 미만)",47],
+      ["맨홀·상하수도 공사","적정공기가 아니면 환기팬 등으로 환기한다.",47],
+      ["맨홀·상하수도 공사","맨홀·상하수도관에 들어가는 작업자에게 공기호흡기 또는 송기마스크를 지급해 착용하게 한다.",47]
+    ]
+  },
+  {
+    id: "roof", label: "지붕·태양광", src: "D1",
+    keys: ["지붕","태양광","패널","모듈","채광창","슬레이트","썬라이트","선라이트","옥상","강판","축사","공장 지붕"],
+    law: "안전보건규칙 제44조~제45조 (지붕 위에서 위험방지)",
+    lead: "지붕(태양광 설비 포함) 작업 전에는 작업발판(폭 30cm 이상), 채광창 덮개, 가장자리 안전난간 또는 추락방호망을 확인해야 합니다.",
+    items: [
+      ["사전 확인","지붕 형태·구조를 미리 파악해 이동통로, 작업발판 등 추락방지 조치를 한다.",18],
+      ["사전 확인","슬레이트·채광창의 노후 상태를 확인하고, 약한 지붕재에는 발판·덮개·추락방지망·안전대 걸이시설 등을 설치한다.",18],
+      ["구조 안전","지붕 위 작업 시 폭 30cm 이상의 작업발판을 설치한다.",18],
+      ["구조 안전","채광창에는 튼튼한 덮개를 설치한다.",18],
+      ["구조 안전","지붕 가장자리에 안전난간을 설치하고, 어려우면 추락방호망이나 안전대 부착설비를 설치한다.",18],
+      ["구조 안전","지붕에 오르는 승강설비(고정식 사다리, 워킹타워 등)를 안전하게 설치한다.",18],
+      ["작업 안전","일기예보를 확인하고 눈·비·강풍이 예보되면 작업을 중지한다.",18],
+      ["작업 안전","작업발판, 승강설비 등 안전한 통로로만 이동한다.",18],
+      ["작업 안전","지붕 위에 자재를 너무 많이 또는 한곳에 몰아 쌓지 않는다.",18],
+      ["작업 안전","지붕 위 작업 시 가공전로(전선)에 닿을 위험이 없게 한다.",18],
+      ["작업 안전","모든 작업자는 안전모·안전화·안전대 등 보호구를 착용한다.",18],
+      ["작업 안전","작업지휘자는 미리 안전수칙을 교육하고 작업 중 준수 여부를 점검한다.",18]
+    ]
+  },
+  {
+    id: "ladder", label: "사다리", src: "D1",
+    keys: ["사다리","a형","발붙임","말비계","디딤대","2인 1조","2인1조"],
+    law: "안전보건규칙 제24조 (사다리식 통로 등의 구조)",
+    lead: "사다리는 원칙적으로 통로용입니다. 작업은 3.5m 이하 A형 사다리에서 경작업만, 높이 2m 이상이면 2인 1조와 안전대 체결이 필요합니다.",
+    items: [
+      ["사전 확인","사다리 대신 이동식 비계, 말비계, 고소작업대를 쓸 수 있는지 먼저 확인한다. (사다리는 원래 이동통로 용도)",20],
+      ["사전 확인","A형 사다리는 경작업(전구 교체, 전기·통신작업 등), 비계·고소작업대 설치가 어려운 좁은 장소에서만 쓴다.",20],
+      ["사전 확인","작업 전 사다리 이상 유무를 확인한다.",20],
+      ["구조 안전","최대 길이 3.5m 이하 A형 사다리에서만 작업한다. (일자형·연장형으로 펼쳐 쓰기 금지)",20],
+      ["구조 안전","평탄하고 단단하며 미끄럽지 않은 바닥에 설치한다.",20],
+      ["구조 안전","쐐기·결속 등 넘어짐 방지조치를 한다.",20],
+      ["구조 안전","파손 없는 튼튼한 금속제 사다리를 쓴다.",20],
+      ["구조 안전","마찰력이 큰 미끄럼 방지장치가 달린 사다리를 쓴다.",20],
+      ["구조 안전","버팀대 설치각도는 바닥 기준 75° 이내로 한다.",20],
+      ["작업 안전","작업자는 안전모·안전화·안전대를 착용하고, 관리감독자는 착용 여부를 수시로 확인한다.",20],
+      ["작업 안전","작업 높이 2m 이상이면 2인 1조 작업, 안전대 착용·체결, 최상부 발판과 그 아래 디딤대에서 작업 금지.",20]
+    ]
+  },
+  {
+    id: "aerial", label: "고소작업대", src: "D1",
+    keys: ["고소작업대","시저","차량탑재","스카이","렌탈","아웃트리거","과상승","작업대"],
+    law: "안전보건규칙 제186조 (고소작업대 설치 등의 조치)",
+    lead: "고소작업대는 작업계획서와 작업지휘자(유도자)를 갖추고, 탑승자는 안전모·안전대를 착용하며, 작업대를 올린 채 이동하지 않아야 합니다.",
+    items: [
+      ["작업 시작 전 점검(관리감독자)","비상정지장치·비상하강 방지장치 기능 이상 유무",3],
+      ["작업 시작 전 점검(관리감독자)","아웃트리거 또는 바퀴의 이상 유무, 작업면의 기울기·요철 유무",3],
+      ["공통","고소작업대 작업계획서(추락·낙하·전도·협착·붕괴 대책, 운행경로, 작업방법)를 작성하고 지킨다.",29],
+      ["공통","작업지휘자 또는 유도자를 배치해 작업계획서대로 지휘한다.",29],
+      ["공통","작업대에 타는 작업자는 안전모와 안전대를 착용한다.",29],
+      ["공통","정격하중을 넘겨 싣거나 타지 않는다.",29],
+      ["공통","작업구간에 관계없는 사람의 출입을 막는다.",29],
+      ["차량탑재형","조종사 자격(기중기운전기능사 또는 교육 이수)을 확인한다.",29],
+      ["차량탑재형","안전인증 및 안전검사 실시 여부를 확인한다.",29],
+      ["차량탑재형","아웃트리거와 브레이크를 확실히 쓰고, 아웃트리거는 지면과 수평으로 설치한다.",29],
+      ["시저형","안전인증 표시가 붙어 있는지 확인한다.",29],
+      ["시저형","작업대 안전난간의 파손·탈락 여부를 확인한다.",29],
+      ["시저형","과상승방지장치를 설치하고 작동하는지 확인한다.",29],
+      ["시저형","작업대를 올린 상태로 작업자를 태우고 이동하지 않는다.",29]
+    ]
+  },
+  {
+    id: "mscaf", label: "이동식 비계", src: "D1",
+    keys: ["이동식비계","이동식 비계","비계","작업발판","틀비계","바퀴"],
+    law: "안전보건규칙 제68조 (이동식비계)",
+    lead: "이동식 비계는 평탄한 바닥, 최상부 안전난간(90cm 이상), 바퀴 구름방지·아웃트리거를 확인하고, 사람이 올라탄 채 옮기지 않아야 합니다.",
+    items: [
+      ["사전 확인","평탄한 바닥에 설치한다.",22],
+      ["사전 확인","작업 높이에 맞는 규격을 쓴다.",22],
+      ["구조 안전","높이는 밑면(가로·세로) 중 짧은 쪽 길이의 4배 이하로 한다.",22],
+      ["구조 안전","2단 이상이면 교차가새를 설치하고 최대 적재하중은 250kg 이하로 한다.",22],
+      ["구조 안전","작업발판은 폭 40cm 이상, 틈은 3cm 이하, 튼튼한 재료로 한다.",22],
+      ["구조 안전","안전난간은 높이 90cm 이상, 중간난간대는 상부난간대와 바닥 중간에 설치한다.",22],
+      ["구조 안전","모든 다리에 바퀴 구름방지장치와 전도방지장치(아웃트리거)를 설치한다.",22],
+      ["작업 안전","작업발판 위 작업 시 지상에 작업지휘자를 두고 안전대 체결 여부를 확인한다.",22],
+      ["작업 안전","작업자가 위에 있는 상태로 비계를 옮기지 않는다.",22],
+      ["작업 안전","재료는 달줄로 올리고 내리며, 한 번에 최대 적재하중의 1/10을 넘기지 않는다.",22],
+      ["작업 안전","모든 작업자는 안전모·안전화 등 보호구를 착용한다.",22]
+    ]
+  },
+  {
+    id: "edge", label: "단부·개구부", src: "D1",
+    keys: ["개구부","단부","난간","안전난간","덮개","슬라브","계단","엘리베이터 피트","추락","떨어짐","안전대"],
+    law: "안전보건규칙 제13조(안전난간), 제42조~제44조(추락 방지, 개구부 방호, 안전대 부착설비)",
+    lead: "단부·개구부는 건설현장 사망사고 1위 기인물입니다. 개구부 덮개 고정, 단부 안전난간(90cm 이상), 안전대 착용을 확인해야 합니다.",
+    items: [
+      ["사전 확인","공사 진행에 따라 바뀌는 개구부·단부 위치를 파악한다.",16],
+      ["안전 시설","개구부(자재인양구 등)에는 항상 덮개를 설치한다.",16],
+      ["안전 시설","추락 위험이 있는 단부(슬라브 끝, 계단 등)에 안전난간을 설치한다.",16],
+      ["안전 시설","작업자에게 안전대를 착용시키고 안전대 부착설비를 설치하며, 관리감독자가 확인한다.",16],
+      ["구조 안전","덮개는 철재 등 쉽게 손상·변형되지 않는 재료로 한다.",16],
+      ["구조 안전","덮개는 개구부보다 각 면 10cm 이상 크게, 바닥에 밀착·고정한다.",16],
+      ["구조 안전","안전난간 높이는 90cm 이상, 중간난간대는 상부난간대와 바닥 중간에 설치한다.",16],
+      ["구조 안전","'위험 개구부', '추락 주의', '임의제거 금지' 등 안전표지를 붙인다.",16],
+      ["작업 안전","부득이 덮개를 임시로 열면 관리감독자를 배치하고, 작업 후 즉시 원상복구한다.",16],
+      ["작업 안전","야간 업무 시 조명을 설치한다.",16],
+      ["작업 안전","모든 작업자는 안전모·안전화 등 보호구를 착용한다.",16],
+      ["작업 안전","정해진 통로가 아닌 개구부·단부를 넘어 이동하지 않도록 교육하고 확인한다.",16]
+    ]
+  },
+  {
+    id: "dig", label: "굴착기·굴착", src: "D1",
+    keys: ["굴착","굴착기","포크레인","포크레인","백호","터파기","지열","천공","보링","버킷","흙막이","사면","매설","배관 매설"],
+    law: "안전보건규칙 제199조~제204조(건설기계 접촉 방지 등), 제221조의2~제221조의5(굴착기)",
+    lead: "굴착기 작업 전에는 운전자 자격, 작업계획, 지반 상태, 후방영상장치를 확인하고, 작업반경 출입을 통제해야 합니다. (지열 천공기 전용 점검표는 아직 등록되지 않아 확인 필요)",
+    items: [
+      ["굴착작업 일반","굴착 장소의 지반 상태를 확인해 굴착방법·순서 등 작업계획을 세우고 지킨다.",37],
+      ["굴착작업 일반","해빙기·장마철 등 지반이 갑자기 변하는 시기에 대비하고, 위험이 예상되면 작업을 중지한다.",37],
+      ["굴착기 운전자","운전자 자격을 확인한다. (3톤 미만: 소형건설기계 조종교육 이수, 3톤 이상: 건설기계조종사면허)",28],
+      ["운전 전 조치","운행경로와 작업방법을 고려한 작업계획을 세우고 지킨다.",28],
+      ["운전 전 조치","지형·지반 상태를 확인해 굴착기가 넘어지지 않게 조치한다.",28],
+      ["운전 전 조치","전조등과 후방영상장치가 정상 작동하는지, 후사경 상태가 양호한지 점검한다.",28],
+      ["작업 중 조치","작업장소 출입을 통제하거나 유도자를 배치한다.",28],
+      ["작업 중 조치","운전원은 안전띠를 착용한다.",28],
+      ["작업 중 조치","버킷 이탈방지용 안전핀을 체결한다.",28],
+      ["작업 중 조치","버킷에 사람이 타지 않게 한다.",28],
+      ["운전자 이탈 시","운전석을 떠날 때 버킷을 땅에 내려놓고 시동키를 뺀다.",28],
+      ["수리·점검 시","붐·암이 갑자기 내려오지 않게 안전지지대 또는 안전블록을 쓴다.",28]
+    ]
+  },
+  {
+    id: "elec", label: "전기", src: null, nodata: true,
+    keys: ["전기","감전","분전반","활선","배선","차단기","누전","접지","전선","케이블","정전","인버터","수배전"],
+    lead: "", items: []
+  }
 ];
 
-const EXAMPLES = {
-  "기계설비":["배관 설치 전에 뭘 확인해야 해?","보일러 설치할 때 환기는 어떻게 확인해?"],
-  "전기":["전기 배선 작업 전에 정전 확인은 어떻게 해?","분전반 점검할 때 주의할 점은?"],
-  "소방":["스프링클러 설치 전 점검 항목 알려줘","용접 작업할 때 화재 예방은?"],
-  "정보통신":["케이블 포설 작업 전에 뭘 확인해?"],
-  "공통":["고소작업 전에 뭘 확인해야 해?","작업 전 안전회의에서 뭘 말해야 해?"]
-};
+/* ===== 2. 공통 ===== */
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const catById = (id) => CATS.find(c => c.id === id);
+const sleepMs = (ms) => new Promise(r => setTimeout(r, ms));
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 1600); }
 
-/* ===================== 상태 / 유틸 ===================== */
-const $ = id => document.getElementById(id);
-const STORE_KEY = "safetalk-check-saved-v1";
-let state = { trade:"공통", taskId:null, current:null };
+$("#date").value = new Date().toISOString().slice(0, 10);
+$("#srcList").innerHTML = Object.values(SOURCES).map(s =>
+  `<li>${esc(s.org)}, 「${esc(s.name)}」, ${esc(s.date)}${s.note ? ' · ' + esc(s.note) : ''} · <a href="${s.url}" target="_blank" rel="noopener">원문</a></li>`
+).join("");
 
-let memStore = []; // 브라우저 저장소를 쓸 수 없을 때(예: 일부 보안 설정) 이 탭이 열려 있는 동안만 유지
-let usingMem = false;
-function loadSaved(){
-  if (usingMem) return memStore;
-  try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }catch(e){ usingMem = true; return memStore; }
+/* ===== 3. 검색 엔진 (등록 자료 안에서만) ===== */
+const STOP = ["뭐","뭘","무엇","어떻게","해야","하나","하나요","할때","할","때","전에","전","후","확인","점검","작업","것","거","좀","알려줘","알려","해","돼","되나","되나요","까지","몇","기준","오늘","그럼","그리고","근데","있어","있나","없어","하면","해요","해줘"];
+const SYN = { "미터": ["m","높이","길이"], "높이": ["높이","m"], "길이": ["길이","m"], "각도": ["각도","°"], "농도": ["농도","%","ppm"], "무게": ["하중","kg"], "하중": ["하중","kg"], "자격": ["자격","면허"], "면허": ["면허","자격"], "보호구": ["보호구","안전모","안전대"], "불": ["화재","소화기"], "비": ["비","강풍","눈"], "날씨": ["일기예보","강풍","비"], "바람": ["강풍"], "후진": ["후방","후사경","유도자"], "부딪": ["출입","유도자","후방"], "충돌": ["출입","유도자","후방"], "떨어": ["추락","안전대","난간"], "추락": ["추락","안전대","난간"], "불티": ["불티","방화포","비산"], "크기": ["크게","cm"], "넓이": ["폭","cm"], "폭": ["폭","cm"] };
+function tokens(q) {
+  return q.toLowerCase().replace(/[?!.,~·()]/g, " ").split(/\s+/)
+    .map(w => w.length > 2 ? w.replace(/(에서|으로|까지|부터|이랑|하고|해야|할때|은|는|이|가|을|를|에|의|도|로|와|과|요)$/, "") : w)
+    .filter(w => w.length >= 1 && !STOP.includes(w) && (w.length >= 2 || SYN[w]));
 }
-function storeSaved(list){
-  if (!usingMem){
-    try{ localStorage.setItem(STORE_KEY, JSON.stringify(list)); return true; }catch(e){ usingMem = true; }
+function expand(tk) { return [...new Set(tk.flatMap(t => [t, ...(SYN[t] || []), ...Object.keys(SYN).filter(k => k.length >= 2 && t.includes(k)).flatMap(k => SYN[k])]))].filter(t => t.length >= 1); }
+function findCat(q) {
+  const ql = q.toLowerCase();
+  let best = null, bestScore = 0;
+  for (const c of CATS) {
+    let s = 0;
+    for (const k of c.keys) if (ql.includes(k)) s += k.length >= 3 ? 2 : 1;
+    if (s > bestScore) { best = c; bestScore = s; }
   }
-  memStore = list; return true;
+  return best;
 }
-function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
-function toast(msg){
-  const t = $("toast"); t.textContent = msg; t.style.display = "block";
-  clearTimeout(toast._t); toast._t = setTimeout(()=>t.style.display="none", 2400);
-}
-function todayStr(){
-  const d = new Date(), p = n => String(n).padStart(2,"0");
-  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
-}
-
-/* ===================== 입력 화면 ===================== */
-function renderTrades(){
-  $("trades").innerHTML = TRADES.map(t =>
-    `<button type="button" class="chip" data-trade="${t}" aria-pressed="${t===state.trade}">${t}</button>`).join("");
-  $("trades").querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => {
-    state.trade = b.dataset.trade; renderTrades(); renderTasks(); renderExamples();
-  }));
-}
-function renderTasks(){
-  const list = TASKS.filter(t => t.trade === state.trade);
-  $("task").innerHTML = `<option value="">(작업을 고르지 않음)</option>` +
-    list.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join("");
-  $("task").value = list.some(t=>t.id===state.taskId) ? state.taskId : "";
-  state.taskId = $("task").value || null;
-}
-function renderExamples(){
-  const ex = EXAMPLES[state.trade] || [];
-  $("examples").innerHTML = ex.map(q => `<button type="button" class="ex">${esc(q)}</button>`).join("");
-  $("examples").querySelectorAll(".ex").forEach(b => b.addEventListener("click", () => {
-    $("question").value = b.textContent; ask();
-  }));
+function rankItems(cat, q) {
+  const own = cat.keys.map(k => k.toLowerCase());
+  const isOwn = (t) => own.some(k => t.includes(k) || k === t);
+  const tk = expand(tokens(q)).filter(t => t.length >= 2 || /[m%°]/.test(t));
+  return cat.items.map((it, i) => {
+    let s = 0;
+    const text = it[1].toLowerCase();
+    for (const t of tk) if (text.includes(t) || it[0].includes(t)) s += isOwn(t) ? 0.5 : 1;
+    return { it, i, s };
+  }).sort((a, b) => b.s - a.s || a.i - b.i);
 }
 
-/* ===================== 질문 → 답 찾기 ===================== */
-function score(task, q){
-  const text = q.toLowerCase().replace(/\s+/g," ");
-  let s = 0;
-  if (text.includes(task.name.toLowerCase())) s += 3;
-  task.keywords.forEach(k => { if (text.includes(k.toLowerCase())) s += 2; });
-  task.items.forEach(it => {
-    it.split(/[\s(),·]+/).forEach(w => { if (w.length >= 2 && text.includes(w.toLowerCase())) s += 0.5; });
-  });
-  return s;
-}
-function findAnswer(){
-  const q = $("question").value.trim();
-  const picked = TASKS.find(t => t.id === state.taskId);
-  if (!q && !picked) return {kind:"empty"};
-  if (!q && picked) return {kind:"task", task:picked, q:"", hits:[]};
-  // 질문이 있으면 선택한 공종 안에서 먼저, 없으면 전체에서 찾는다
-  const pool = picked ? [picked] : TASKS.filter(t => t.trade === state.trade);
-  let ranked = pool.map(t => ({t, s:score(t,q)})).sort((a,b)=>b.s-a.s);
-  if (!picked && (!ranked[0] || ranked[0].s < 2)){
-    ranked = TASKS.map(t => ({t, s:score(t,q)})).sort((a,b)=>b.s-a.s);
-  }
-  if (!ranked[0] || ranked[0].s < 2){
-    return {kind:"none", q, suggestions: TASKS.filter(t=>t.trade===state.trade).map(t=>t.name)};
-  }
-  const best = ranked[0].t;
-  const low = q.toLowerCase();
-  const hits = best.items.map((it,i)=>({i, hit: it.split(/[\s(),·]+/).some(w => w.length>=2 && low.includes(w.toLowerCase()))}))
-                         .filter(x=>x.hit).map(x=>x.i);
-  return {kind:"task", task:best, q, hits};
-}
-
-function ask(){
-  const ans = findAnswer();
-  const box = $("result");
-  box.classList.remove("hidden");
-  if (ans.kind === "empty"){
-    state.current = null;
-    box.innerHTML = `<div class="card"><div class="notfound"><span class="badge b-warn">확인 필요</span>
-      공종과 작업을 고르거나 질문을 입력해 주세요.</div></div>`;
-    return;
-  }
-  if (ans.kind === "none"){
-    state.current = null;
-    const sug = ans.suggestions.map(n=>`<li>${esc(n)}</li>`).join("");
-    box.innerHTML = `<div class="card"><h2>2. 결과</h2><div class="notfound">
-      <span class="badge b-warn">확인 필요</span><b>등록된 자료에서 맞는 항목을 찾지 못했어요.</b>
-      <p style="margin:8px 0 0">추측해서 답하지 않았어요. 담당 안전관리자나 원문 자료로 확인해 주세요.</p>
-      ${sug ? `<p style="margin:10px 0 4px">${esc(state.trade)} 공종에 등록된 작업:</p><ul style="margin:0;padding-left:20px">${sug}</ul>`:""}
-      </div></div>`;
-    return;
-  }
-  const task = ans.task;
-  state.current = { taskId:task.id, taskName:task.name, trade:task.trade, question:ans.q,
-    marks: task.items.map(()=> "") };
-  const hitSet = new Set(ans.hits);
-  const summary = ans.q
-    ? `"${esc(ans.q)}" 질문에 가장 가까운 작업은 <b>${esc(task.name)}</b>(${esc(task.trade)})예요. 작업 전 확인 항목 ${task.items.length}개를 보여드려요.`
-    : `<b>${esc(task.name)}</b>(${esc(task.trade)}) 작업 전 확인 항목 ${task.items.length}개예요.`;
-  box.innerHTML = `
-    <div class="card">
-      <h2>2. 결과</h2>
-      <span class="badge b-sample">${DATA_LABEL}</span><span class="badge b-warn">근거 확인 필요</span>
-      <div class="summary">${summary}${hitSet.size?`<br><small>질문과 관련 있는 항목은 초록 테두리로 표시했어요.</small>`:""}</div>
-      <ul class="check" id="checkList">
-        ${task.items.map((it,i)=>`
-        <li class="${hitSet.has(i)?"hit":""}" data-i="${i}">
-          <div class="itxt">${i+1}. ${esc(it)}</div>
-          <div class="seg" role="group" aria-label="${i+1}번 항목 점검 결과">
-            <button type="button" class="s-ok" data-v="확인" aria-pressed="false">확인</button>
-            <button type="button" class="s-na" data-v="해당 없음" aria-pressed="false">해당 없음</button>
-            <button type="button" class="s-no" data-v="미확인" aria-pressed="false">미확인</button>
-          </div>
-        </li>`).join("")}
-      </ul>
-      <div class="count" id="progress"></div>
-      <div class="src"><b>근거</b> <span class="badge b-sample">${SOURCE_NOTE.type}</span><br>
-        ${esc(SOURCE_NOTE.text)}<br><small>${esc(SOURCE_NOTE.ref)}</small></div>
-      <button class="btn block" id="saveBtn">점검 결과 저장</button>
-    </div>`;
-  box.querySelectorAll("#checkList li").forEach(li => {
-    const i = +li.dataset.i;
-    li.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
-      const v = b.dataset.v;
-      state.current.marks[i] = (state.current.marks[i] === v) ? "" : v;
-      li.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.v === state.current.marks[i])));
-      updateProgress();
-    }));
-  });
-  $("saveBtn").addEventListener("click", saveResult);
-  updateProgress();
-  box.scrollIntoView({behavior:"smooth", block:"start"});
-}
-function updateProgress(){
-  if (!state.current) return;
-  const m = state.current.marks, done = m.filter(Boolean).length;
-  $("progress").textContent = `표시한 항목 ${done} / ${m.length}  (확인 ${m.filter(x=>x==="확인").length}, 해당 없음 ${m.filter(x=>x==="해당 없음").length}, 미확인 ${m.filter(x=>x==="미확인").length})`;
-}
-
-/* ===================== 점검 결과 저장 ===================== */
-function saveResult(){
-  if (!state.current) return;
-  const marks = state.current.marks;
-  if (!marks.some(Boolean)){ toast("항목을 하나 이상 표시한 뒤 저장해 주세요."); return; }
-  const task = TASKS.find(t => t.id === state.current.taskId);
-  const rec = {
-    id: Date.now(),
-    date: $("checkDate").value || todayStr(),
-    siteName: $("siteName").value.trim() || "(작업명 없음)",
-    trade: task.trade, taskName: task.name,
-    question: state.current.question,
-    items: task.items.map((it,i)=>({text:it, mark: marks[i] || "미표시"})),
-    dataType: DATA_LABEL
-  };
-  const list = loadSaved(); list.unshift(rec);
-  storeSaved(list);
-  toast(usingMem ? "저장했어요. (브라우저 저장소를 쓸 수 없어 이 탭을 닫으면 사라져요)" : "저장했어요. '저장된 점검'에서 볼 수 있어요.");
-  renderSaved();
-}
-function renderSaved(){
-  const list = loadSaved();
-  $("savedCount").textContent = list.length ? `(${list.length})` : "";
-  if (!list.length){
-    $("savedList").innerHTML = `<div class="empty">저장된 점검이 없어요.<br>질문하기 화면에서 점검 결과를 저장해 보세요.</div>`;
-    return;
-  }
-  $("savedList").innerHTML = list.map(r => {
-    const c = k => r.items.filter(x=>x.mark===k).length;
-    return `<div class="saved-item" data-id="${r.id}">
-      <h3>${esc(r.siteName)}</h3>
-      <div class="meta">${esc(r.date)} · ${esc(r.trade)} · ${esc(r.taskName)} <span class="badge b-sample">${esc(r.dataType)}</span></div>
-      <div class="meta">확인 ${c("확인")} · 해당 없음 ${c("해당 없음")} · 미확인 ${c("미확인")} · 미표시 ${c("미표시")}</div>
-      <div class="detail hidden">${r.items.map((x,i)=>`<div>${i+1}. ${esc(x.text)} <b>[${esc(x.mark)}]</b></div>`).join("")}</div>
-      <div class="acts">
-        <button type="button" class="btn ghost" data-act="toggle">자세히 보기</button>
-        <button type="button" class="btn danger" data-act="del">삭제</button>
-      </div>
-    </div>`;
-  }).join("") + `<button type="button" class="btn danger" id="clearAll" style="margin-top:6px">전체 삭제</button>`;
-  $("savedList").querySelectorAll(".saved-item").forEach(el => {
-    el.querySelector('[data-act="toggle"]').addEventListener("click", e => {
-      const d = el.querySelector(".detail"); d.classList.toggle("hidden");
-      e.target.textContent = d.classList.contains("hidden") ? "자세히 보기" : "접기";
-    });
-    el.querySelector('[data-act="del"]').addEventListener("click", () => {
-      if (!confirm("이 점검 기록을 삭제할까요?")) return;
-      storeSaved(loadSaved().filter(r => String(r.id) !== el.dataset.id)); renderSaved();
-    });
-  });
-  $("clearAll").addEventListener("click", () => {
-    if (!confirm("저장된 점검 기록을 모두 삭제할까요?")) return;
-    storeSaved([]); renderSaved();
-  });
-}
-
-
-/* ===================== 챗봇 (규칙 기반, 샘플 데이터만 사용) ===================== */
-/* ★ AI 답변 모드 설정: Cloudflare Worker 주소를 여기에 넣으세요 (예: "https://safetalk-ai.내계정.workers.dev").
-   비워두면 AI 모드는 꺼지고 규칙 기반 챗봇만 동작합니다. API 키는 여기에 절대 넣지 마세요(Worker 비밀값에만 저장). */
-const AI_ENDPOINT = "https://safetalk-ai-bj.djbj1167.workers.dev";
-const chat = { inited:false, last:null, busy:false, ai:false, history:[] };
-
-function aiData(){ return TASKS.map(t=>({id:t.id, trade:t.trade, name:t.name, items:t.items})); }
-function fmtAI(s){
-  return esc(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\n/g,"<br>");
-}
-async function askAI(q){
-  chat.busy = true;
-  const t = document.createElement("div");
-  t.className = "typing"; t.textContent = "AI가 체크리스트 데이터를 보고 답하는 중…";
-  $("chatLog").appendChild(t); $("chatLog").scrollTop = $("chatLog").scrollHeight;
-  const ctl = new AbortController(), timer = setTimeout(()=>ctl.abort(), 25000);
-  try{
-    const res = await fetch(AI_ENDPOINT, {
-      method:"POST", headers:{"Content-Type":"application/json"}, signal:ctl.signal,
-      body: JSON.stringify({ question:q, history:chat.history.slice(-6), data:aiData() })
-    });
-    if (!res.ok) throw new Error("HTTP "+res.status);
-    const out = await res.json();
-    if (!out.answer) throw new Error("빈 응답");
-    t.remove();
-    const task = TASKS.find(x=>x.id===out.taskId);
-    if (task) chat.last = task;
-    chat.history.push({role:"user", text:q}, {role:"model", text:out.answer});
-    const m = addMsg("bot", `<div>${fmtAI(out.answer)}</div>
-      <div class="badges"><span class="badge b-ai">AI 답변</span><span class="badge b-sample">${DATA_LABEL} 기준</span><span class="badge b-warn">근거 확인 필요</span></div>
-      <small>AI가 샘플 체크리스트 안에서만 답하도록 제한했지만 틀릴 수 있어요. 최종 판단은 안전관리자가 해 주세요.</small>
-      ${task?`<div class="acts"><button type="button" class="primary" data-open="${task.id}">${esc(task.name)} 점검표로 열어 체크하기</button></div>`:""}`);
-    bindActs(m, q);
-  }catch(e){
-    t.remove();
-    addMsg("bot", `<small>AI 서버에 연결하지 못해 <b>기본 챗봇</b>으로 답할게요. (${esc(e.name==="AbortError"?"시간 초과":e.message)})</small>`);
-    chat.busy = false;
-    answerChat(q);
-    return;
-  }finally{
-    clearTimeout(timer);
-  }
-  chat.busy = false;
-}
-const WORD_SPLIT = /[\s(),·]+/;
-const STOP = new Set(["작업","확인","여부","상태","확인했는","여부를","전에","작업이","있는","했는"]);
-function stem(w){ return w.replace(/(했는가|있는가|하고|인가|으로|에서|을|를|은|는|이|가|의|에|와|과|로|도)$/,""); }
-function itemHits(task, q){
-  const low = q.toLowerCase();
-  return task.items.map((it,i)=>({i, hit: it.split(WORD_SPLIT).some(w => {
-      const s = stem(w.toLowerCase());
-      return s.length>=2 && !STOP.has(s) && low.includes(s);
-  })})).filter(x=>x.hit).map(x=>x.i);
-}
-function addMsg(who, html){
+/* ===== 4. 챗봇 ===== */
+const chat = { last: null, busy: false };
+const log = $("#log");
+function addMsg(role, html) {
   const d = document.createElement("div");
-  d.className = "msg " + who;
-  if (who === "user") d.textContent = html; else d.innerHTML = html;
-  $("chatLog").appendChild(d);
-  $("chatLog").scrollTop = $("chatLog").scrollHeight;
+  d.className = "msg " + role;
+  d.innerHTML = role === "bot" ? `<div class="avatar" aria-hidden="true">체크</div><div class="bubble">${html}</div>` : `<div class="bubble">${html}</div>`;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
   return d;
 }
-function botSay(html, bind){
+function srcBadge(cat, page) {
+  const s = SOURCES[cat.src];
+  return `<a class="badge" href="${s.url}" target="_blank" rel="noopener">${esc(s.short)} ${page}쪽</a>`;
+}
+function catButtons(exclude) {
+  return `<div class="quick">${CATS.filter(c => c.id !== exclude).map(c => `<button type="button" data-say="${esc(c.label)} 작업 점검항목 알려줘">${esc(c.label)}${c.nodata ? '<span class="nodata">자료 없음</span>' : ''}</button>`).join("")}</div>`;
+}
+function itemList(cat, list) {
+  return `<ol>${list.map(({ it, i }) => `<li value="${i + 1}"><span class="grp">${esc(it[0])}</span>${esc(it[1])}<br>${srcBadge(cat, it[2])}</li>`).join("")}</ol>`;
+}
+function lawLine(cat) {
+  return cat.law ? `<p><span class="badge law">관련 조항: ${esc(cat.law)}</span><span class="badge check">현행 여부 확인 필요</span></p>` : "";
+}
+function answerFor(cat, q, follow) {
+  const ranked = rankItems(cat, q);
+  const hits = ranked.filter(r => r.s >= 1);
+  const specific = hits.length > 0 && hits.length < cat.items.length;
+  const list = specific ? hits.slice(0, 4) : ranked.slice(0, 5);
+  const intro = follow
+    ? `<p>앞에서 말한 <b>${esc(cat.label)}</b> 작업 기준으로 찾아봤어요.</p>`
+    : `<p>${esc(cat.lead)}</p>`;
+  const more = cat.items.length - list.length;
+  return intro +
+    `<p>${specific ? "질문과 관련된 항목이에요." : "먼저 확인할 항목이에요."}</p>` +
+    itemList(cat, list) + lawLine(cat) +
+    `<div class="quick">
+       <button type="button" class="primary" data-act="check" data-cat="${cat.id}">점검표로 체크하기 (${cat.items.length}개)</button>
+       ${more > 0 ? `<button type="button" data-act="all" data-cat="${cat.id}">나머지 ${more}개도 보기</button>` : ""}
+       <button type="button" data-act="others">다른 작업</button>
+     </div>`;
+}
+function notFound(q, cat) {
+  const what = cat ? `<b>${esc(cat.label)}</b> 작업` : "이 질문";
+  return `<div class="warnbox"><b>등록된 점검표에서 찾지 못했어요. (확인 필요)</b><br>
+    ${what}에 대한 내용은 아직 앱에 등록된 자료에 없어요. 답을 지어내지 않을게요.
+    현장 안전관리자에게 확인하고, 관련 점검표를 자료로 추가해 주세요.</div>
+    <p>지금 답할 수 있는 작업은 아래와 같아요.</p>${catButtons(cat && cat.id)}`;
+}
+function checklistStatus() {
+  const cat = catById(state.cat);
+  if (!cat) return `<p>아직 열린 점검표가 없어요. 작업을 말하면 점검표를 열어 드릴게요.</p>${catButtons()}`;
+  const v = Object.values(state.marks);
+  const ok = v.filter(x => x === "ok").length, bad = v.filter(x => x === "bad").length, na = v.filter(x => x === "na").length;
+  const none = cat.items.length - ok - bad - na;
+  const bads = cat.items.map((it, i) => [it, i]).filter(([, i]) => state.marks[i] === "bad");
+  return `<p><b>${esc(cat.label)}</b> 점검 현황: 적정 ${ok} · 부적정 ${bad} · 해당없음 ${na} · 미체크 ${none}</p>` +
+    (bads.length ? `<p>조치가 필요한 항목:</p><ol>${bads.map(([it, i]) => `<li value="${i + 1}">${esc(it[1])}${state.fixes[i] ? ` → ${esc(state.fixes[i])}` : ""}</li>`).join("")}</ol>` : "") +
+    (none ? `<p>아직 체크하지 않은 항목이 ${none}개 있어요.</p>` : `<p>모든 항목을 체크했어요.</p>`) +
+    `<div class="quick"><button type="button" class="primary" data-act="goCheck">점검표로 이동</button></div>`;
+}
+function reply(q) {
+  const ql = q.toLowerCase().trim();
+  const lastCat = catById(chat.last);
+  if (/^(안녕|하이|hi|hello|반가)/.test(ql)) return greeting();
+  if (/(도움말|사용법|어떻게 써|뭘 할 수|뭐 할 수|기능|help)/.test(ql)) return help();
+  if (/(고마|감사|ㄳ|땡큐|thanks)/.test(ql)) return `<p>천만에요. 오늘도 안전한 작업 되세요. 점검을 마치면 "결과 알려줘"라고 물어보세요.</p>`;
+  if (/(출처|근거|자료).*(뭐|어디|알려|있)|^(출처|근거)/.test(ql)) {
+    return `<p>저는 아래 자료에 있는 내용으로만 답해요.</p><ol>${Object.values(SOURCES).map(s => `<li>${esc(s.org)}, 「${esc(s.name)}」(${esc(s.date)}) <a class="badge" href="${s.url}" target="_blank" rel="noopener">원문</a></li>`).join("")}</ol><p>법령 조항은 개정될 수 있어 현행 여부 확인이 필요해요.</p>`;
+  }
+  if (/(어떤 작업|무슨 작업|작업 목록|뭐 물어|뭘 물어|목록)/.test(ql)) return `<p>지금 답할 수 있는 작업이에요. 눌러 보세요.</p>${catButtons()}`;
+  if (/(결과|현황|요약|몇 개 했|다 했)/.test(ql)) return checklistStatus();
+  const wantCheck = /(점검표|체크리스트|체크 ?시작|점검 ?시작|체크할래|체크하자)/.test(ql);
+  let cat = findCat(q), follow = false;
+  if (!cat && lastCat && !lastCat.nodata && rankItems(lastCat, q)[0].s >= 1) { cat = lastCat; follow = true; }
+  if (!cat && wantCheck && lastCat && !lastCat.nodata) cat = lastCat;
+  if (!cat) return notFound(q, null);
+  chat.last = cat.id;
+  if (cat.nodata) return notFound(q, cat);
+  if (wantCheck) { openChecklist(cat, false); return `<p><b>${esc(cat.label)}</b> 점검표(${cat.items.length}개 항목)를 아래에 열었어요.</p><div class="quick"><button type="button" class="primary" data-act="goCheck">점검표로 이동</button></div>`; }
+  return answerFor(cat, q, follow);
+}
+function greeting() {
+  return `<p>안녕하세요, <b>체크봇</b>이에요. 오늘 어떤 작업을 하시나요?</p>
+    <p>작업을 고르거나 "맨홀 들어가기 전 산소 농도 기준은?"처럼 편하게 물어보세요. 정부 점검표에 있는 내용만 출처와 함께 알려 드려요.</p>${catButtons()}`;
+}
+function help() {
+  return `<p>이렇게 쓰면 돼요.</p><ul>
+    <li>작업 질문: "배관 용접 전에 뭘 확인해?"</li>
+    <li>이어서 질문: "자격은?" (앞에서 말한 작업 기준으로 찾아요)</li>
+    <li>점검 시작: "점검표 열어줘"</li>
+    <li>진행 확인: "결과 알려줘"</li>
+    <li>자료 확인: "출처 알려줘"</li></ul>`;
+}
+/* ===== 4-1. AI 검색 모드 (Cloudflare Worker -> Gemini + Google 검색) =====
+   AI_ENDPOINT: Cloudflare Worker 주소. 비우면 AI 모드는 꺼지고 기본(등록 점검표) 모드만 동작합니다.
+   API 키는 절대 여기에 넣지 마세요(Worker 비밀값에만 저장). */
+const AI_ENDPOINT = "https://safetalk-ai-bj.djbj1167.workers.dev";
+chat.ai = false; chat.hist = [];
+const LOCAL_RE = /^(안녕|하이|hi|hello|반가)|(도움말|사용법|기능|help)|(고마|감사|땡큐|thanks)|(출처|근거|자료).*(뭐|어디|알려|있)|^(출처|근거)|(어떤 작업|무슨 작업|작업 목록|뭐 물어|뭘 물어|목록)|(결과|현황|요약|몇 개 했|다 했)|(점검표 ?열|체크리스트 ?열|체크 ?시작|점검 ?시작|체크할래|체크하자)/;
+function aiData() {
+  return CATS.map(c => {
+    const s = c.src ? SOURCES[c.src] : null;
+    return { id: c.id, label: c.label, source: s ? s.org + " 「" + s.name + "」(" + s.date + ")" : "등록 자료 없음", law: c.law || "",
+             items: c.items.map(it => "[" + (s ? s.short : "") + " " + it[2] + "쪽][" + it[0] + "] " + it[1]) };
+  });
+}
+function safeUrl(u) { try { const x = new URL(u); return (x.protocol === "https:" || x.protocol === "http:") ? x.href : ""; } catch (e) { return ""; } }
+function fmtAI(s, sources) {
+  return esc(s).replace(/\[(\d{1,2})\]/g, (m, n) => {
+    const src = sources && sources[+n - 1], u = src && safeUrl(src.uri);
+    return u ? `<sup><a href="${esc(u)}" target="_blank" rel="noopener noreferrer" title="${esc(src.title || "출처")}">[${n}]</a></sup>` : m;
+  }).replace(/\n+/g, "<br>");
+}
+function webSources(sources) {
+  const ok = (sources || []).map(s => ({ t: s.title || "출처", u: safeUrl(s.uri) })).filter(s => s.u);
+  if (!ok.length) return `<div class="srcbox none"><b>구글 검색 출처 없음</b> <span class="badge check">확인 필요</span><br>
+    <span class="mini">검색 근거를 가져오지 못했어요. 등록 점검표에 있는 내용만 참고하고, 원문으로 꼭 확인해 주세요.</span></div>`;
+  return `<div class="srcbox"><b>출처 (Google 검색)</b><ol>${ok.map(s => `<li><a href="${esc(s.u)}" target="_blank" rel="noopener noreferrer">${esc(s.t)}</a></li>`).join("")}</ol>
+    <span class="mini">링크를 눌러 원문을 직접 확인해 주세요.</span></div>`;
+}
+async function askAI(q) {
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 30000);
+  try {
+    const res = await fetch(AI_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, signal: ctl.signal,
+      body: JSON.stringify({ question: q, history: chat.hist.slice(-6), data: aiData() }) });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const out = await res.json();
+    if (!out.answer) throw new Error("빈 응답");
+    const cat = catById(out.taskId);
+    if (cat) chat.last = cat.id;
+    chat.hist.push({ role: "user", text: q }, { role: "model", text: out.answer });
+    const grounded = !!(out.sources && out.sources.length);
+    const html = `<p>${fmtAI(out.answer, out.sources)}</p>
+      <p><span class="badge ai">AI 답변</span>${grounded ? '<span class="badge ok">Google 검색 기반</span>' : '<span class="badge check">검색 출처 없음</span>'}<span class="badge">등록 점검표 우선</span></p>
+      ${webSources(out.sources)}<div data-sugg></div>
+      <p class="mini">AI가 틀릴 수 있어요. 최종 판단은 현장 안전관리자가 합니다.</p>
+      ${cat && !cat.nodata ? `<div class="quick"><button type="button" class="primary" data-act="check" data-cat="${cat.id}">${esc(cat.label)} 점검표로 체크하기 (${cat.items.length}개)</button><button type="button" data-act="others">다른 작업</button></div>` : ""}`;
+    return { html: html, sugg: grounded ? out.suggestionHtml : "" };
+  } catch (e) {
+    return null;
+  } finally { clearTimeout(timer); }
+}
+async function send(text) {
+  const q = text.trim();
+  if (!q || chat.busy) return;
   chat.busy = true;
-  const t = document.createElement("div");
-  t.className = "typing"; t.textContent = "답변을 찾는 중…";
-  $("chatLog").appendChild(t); $("chatLog").scrollTop = $("chatLog").scrollHeight;
-  setTimeout(() => {
-    t.remove();
-    const m = addMsg("bot", html);
-    if (bind) bind(m);
-    chat.busy = false;
-  }, 350);
-}
-function openInChecklist(task, q){
-  state.trade = task.trade; state.taskId = task.id;
-  renderTrades(); renderTasks(); renderExamples();
-  $("question").value = q || "";
-  show("ask"); ask();
-}
-function taskChipsHtml(list){
-  return list.map(t=>`<button type="button" data-pick="${t.id}">${esc(t.name)}</button>`).join("");
-}
-function bindActs(m, q){
-  m.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => {
-    openInChecklist(TASKS.find(t=>t.id===b.dataset.open), q);
-  }));
-  m.querySelectorAll("[data-pick]").forEach(b => b.addEventListener("click", () => {
-    const t = TASKS.find(x=>x.id===b.dataset.pick);
-    chatSend(t.name + " 확인 항목 알려줘");
-  }));
-}
-function answerChat(q){
-  const low = q.toLowerCase();
-  if (/^(안녕|하이|hi|hello|반가)/.test(low) ){
-    return botSay("안녕하세요! 작업 전 점검 항목을 질문으로 찾아드리는 안전톡 챗봇이에요. <br>예: <b>\"용접할 때 화재 예방은?\"</b>, <b>\"전기 배선 작업 전 확인할 것\"</b>");
+  addMsg("user", esc(q));
+  const typing = addMsg("bot", `<span class="typing" aria-label="입력 중"><span></span><span></span><span></span></span>`);
+  let html = null, sugg = "";
+  if (chat.ai && AI_ENDPOINT && !LOCAL_RE.test(q.toLowerCase())) {
+    const r = await askAI(q);
+    if (r) { html = r.html; sugg = r.sugg; }
+    else { await sleepMs(300); html = '<p class="mini">AI 서버에 연결하지 못해 기본 모드(등록 점검표)로 답할게요.</p>' + reply(q); }
+  } else { await sleepMs(450); html = reply(q); }
+  const bubble = typing.querySelector(".bubble");
+  bubble.innerHTML = html;
+  if (sugg) {
+    const f = document.createElement("iframe");
+    f.setAttribute("sandbox", "allow-popups allow-popups-to-escape-sandbox");
+    f.title = "Google 검색 추천어"; f.srcdoc = sugg;
+    f.style.cssText = "width:100%;height:56px;border:0;margin:6px 0;color-scheme:light";
+    const slot = bubble.querySelector("[data-sugg]"); if (slot) slot.appendChild(f);
   }
-  if (/(도움|사용법|뭘.*(할 수|물어)|뭐.*(할 수|물어)|목록|리스트|작업.*종류|어떤.*작업)/.test(low)){
-    const rows = TRADES.map(tr => `<b>${esc(tr)}</b>: ${TASKS.filter(t=>t.trade===tr).map(t=>esc(t.name)).join(", ")||"-"}`).join("<br>");
-    return botSay("지금 물어볼 수 있는 작업이에요.<br>"+rows+"<div class='acts'>"+taskChipsHtml(TASKS)+"</div>", m=>bindActs(m,""));
-  }
-  if (/(고마|감사|땡큐)/.test(low)) return botSay("도움이 됐다면 다행이에요. 현장 최종 판단은 꼭 안전관리자와 함께 해 주세요.");
-
-  // 전체 작업에서 점수 계산
-  let ranked = TASKS.map(t=>({t, s:score(t,q)})).sort((a,b)=>b.s-a.s);
-  let best = ranked[0], usedContext = false;
-  if (best.s < 2 && chat.last){
-    // 후속 질문: 직전 작업의 항목에 대한 질문이면 그 작업으로 답한다
-    if (itemHits(chat.last, q).length){ best = {t:chat.last, s:2}; usedContext = true; }
-  }
-  if (best.s < 2){
-    return botSay(`<span class="badge b-warn">확인 필요</span><b>등록된 자료에서 맞는 항목을 찾지 못했어요.</b><br>
-      추측해서 답하지 않을게요. 담당 안전관리자나 원문 자료로 확인해 주세요.<br><small>아래 작업 중에서 골라 보세요.</small>
-      <div class="acts">${taskChipsHtml(TASKS)}</div>`, m=>bindActs(m,q));
-  }
-  const task = best.t, hits = itemHits(task, q), hitSet = new Set(hits);
-  chat.last = task;
-  const close = ranked.filter(r => r.t.id !== task.id && r.s >= 2 && r.s >= best.s*0.75).slice(0,3);
-  const lead = usedContext ? `앞에서 본 <b>${esc(task.name)}</b>(${esc(task.trade)}) 기준으로 답할게요.`
-                           : `질문과 가장 가까운 작업은 <b>${esc(task.name)}</b>(${esc(task.trade)})예요.`;
-  const list = task.items.map((it,i)=>`<li class="${hitSet.has(i)?"hit":""}">${esc(it)}${hitSet.has(i)?" <small>(질문과 관련)</small>":""}</li>`).join("");
-  botSay(`${lead} 작업 전 확인 항목 ${task.items.length}개예요.
-    <ol>${list}</ol>
-    <div class="badges"><span class="badge b-sample">${DATA_LABEL}</span><span class="badge b-warn">근거 확인 필요</span></div>
-    <small>${esc(SOURCE_NOTE.text)}</small>
-    <div class="acts">
-      <button type="button" class="primary" data-open="${task.id}">점검표로 열어 체크하기</button>
-      ${close.map(r=>`<button type="button" data-pick="${r.t.id}">${esc(r.t.name)}도 보기</button>`).join("")}
-    </div>`, m=>bindActs(m,q));
+  log.scrollTop = log.scrollHeight;
+  chat.busy = false;
+  renderSuggest();
 }
-function chatSend(text){
-  text = (text||"").trim();
-  if (!text || chat.busy) return;
-  addMsg("user", text);
-  if (chat.ai && AI_ENDPOINT) askAI(text); else answerChat(text);
-}
-function renderChatQuick(){
-  const pool = ["고소작업 전에 뭘 확인해야 해?","용접 작업할 때 화재 예방은?","전기 배선 작업 전 정전 확인은?","작업 전 안전회의에서 뭘 말해야 해?","물어볼 수 있는 작업 목록"];
-  $("chatQuick").innerHTML = pool.map(q=>`<button type="button">${esc(q)}</button>`).join("");
-  $("chatQuick").querySelectorAll("button").forEach(b => b.addEventListener("click", () => chatSend(b.textContent)));
-}
-function initChat(){
-  if (chat.inited) return;
-  chat.inited = true;
-  renderChatQuick();
-  const tg = $("aiToggle");
-  if (!AI_ENDPOINT){
-    tg.disabled = true; tg.checked = false; $("aiToggleLbl").classList.add("off");
-    $("aiToggleTxt").textContent = "AI 답변 모드 (서버 미연결)";
-  } else {
-    tg.checked = true; chat.ai = true;
-  }
+(function initAiToggle() {
+  const tg = $("#aiToggle");
+  if (!AI_ENDPOINT) { tg.disabled = true; $("#aiLbl").classList.add("off"); $("#aiTxt").textContent = "AI 검색 (서버 미연결)"; return; }
+  tg.checked = true; chat.ai = true;
   tg.addEventListener("change", () => {
     chat.ai = tg.checked;
-    addMsg("bot", chat.ai ? "<small>AI 답변 모드를 켰어요. 체크리스트 데이터 안에서만 답해요.</small>" : "<small>기본 챗봇(규칙 기반)으로 바꿨어요.</small>");
+    addMsg("bot", chat.ai ? '<p>AI 검색 모드를 켰어요. 등록 점검표를 먼저 보고, 부족하면 구글 검색 출처를 붙여서 답해요.</p>'
+                          : '<p>기본 모드로 바꿨어요. 등록된 점검표 안의 내용으로만 답해요.</p>');
   });
-  addMsg("bot", `안녕하세요, <b>안전톡 챗봇</b>이에요. 작업 전 점검 항목을 질문으로 찾아드려요.<br>
-    <small>답변은 팀이 만든 <b>샘플 데이터</b> 기준이고, 실제 법령·사내 기준이 아니에요. 최종 판단은 안전관리자가 해 주세요.</small>`);
+})();
+function renderSuggest() {
+  const c = catById(chat.last);
+  const base = ["배관 용접 전에 뭘 확인해?", "맨홀 산소 농도 기준은?", "A형 사다리 몇 미터까지 돼?", "지붕 태양광 작업 추락 방지는?", "분전반 감전 예방은?", "출처 알려줘"];
+  const follow = c && !c.nodata ? ["자격은?", "보호구는?", "점검표 열어줘", "결과 알려줘"] : [];
+  $("#suggest").innerHTML = [...follow, ...base].map(s => `<button type="button" data-say="${esc(s)}">${esc(s)}</button>`).join("");
 }
-$("chatForm").addEventListener("submit", e => { e.preventDefault(); const v = $("chatInput").value; $("chatInput").value = ""; chatSend(v); });
+log.addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  const act = b.dataset.act, cat = catById(b.dataset.cat);
+  if (act === "check") { openChecklist(cat, true); addMsg("bot", `<p><b>${esc(cat.label)}</b> 점검표를 열었어요. 체크를 마치면 "결과 알려줘"라고 물어보세요.</p>`); }
+  else if (act === "all") { addMsg("bot", `<p><b>${esc(cat.label)}</b> 전체 ${cat.items.length}개 항목이에요.</p>` + itemList(cat, cat.items.map((it, i) => ({ it, i }))) + lawLine(cat) + `<div class="quick"><button type="button" class="primary" data-act="check" data-cat="${cat.id}">점검표로 체크하기</button></div>`); }
+  else if (act === "others") { addMsg("bot", `<p>어떤 작업을 볼까요?</p>${catButtons(chat.last)}`); }
+  else if (act === "goCheck") { $("#checkSection").scrollIntoView({ behavior: "smooth" }); }
+});
+document.addEventListener("click", (e) => {
+  const s = e.target.closest("[data-say]");
+  if (s) send(s.dataset.say);
+});
+$("#composer").addEventListener("submit", (e) => { e.preventDefault(); const v = $("#q").value; $("#q").value = ""; send(v); });
+$("#clearChat").onclick = () => { log.innerHTML = ""; chat.last = null; chat.hist = []; addMsg("bot", greeting()); renderSuggest(); };
+$("#backChat").onclick = () => { $("#chatSection").scrollIntoView({ behavior: "smooth" }); };
 
-/* ===================== 화면 전환 / 시작 ===================== */
-function show(which){
-  ["ask","chat","saved"].forEach(v => {
-    $("view-"+v).classList.toggle("hidden", v !== which);
-    $("tab-"+v).setAttribute("aria-selected", String(v === which));
-  });
-  if (which === "saved") renderSaved();
-  if (which === "chat") { initChat(); $("chatInput").focus({preventScroll:true}); }
+/* ===== 5. 점검표 체크 (기능 2) ===== */
+const state = { cat: null, marks: {}, fixes: {} };
+function openChecklist(cat, scroll) {
+  if (!cat || cat.nodata) return;
+  if (state.cat !== cat.id) { state.cat = cat.id; state.marks = {}; state.fixes = {}; }
+  renderChecklist();
+  if (scroll) $("#checkSection").scrollIntoView({ behavior: "smooth" });
 }
-$("tab-chat").addEventListener("click", () => show("chat"));
-$("tab-ask").addEventListener("click", () => show("ask"));
-$("tab-saved").addEventListener("click", () => show("saved"));
-$("askBtn").addEventListener("click", ask);
-$("task").addEventListener("change", () => { state.taskId = $("task").value || null; });
-$("question").addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) ask(); });
+function renderChecklist() {
+  const cat = catById(state.cat);
+  if (!cat) return;
+  const s = SOURCES[cat.src];
+  $("#checklist").innerHTML =
+    `<div class="ck-head"><div class="ck-title">${esc(cat.label)} 작업 전 점검표</div>
+       <a class="badge" href="${s.url}" target="_blank" rel="noopener">출처: ${esc(s.short)} (${esc(s.date)})</a></div>
+     <ol class="ck-list">${cat.items.map((it, i) => {
+        const m = state.marks[i] || "";
+        return `<li class="ck-item ${m ? 's-' + m : ''}" data-i="${i}">
+          <div class="ck-text">${i + 1}. ${esc(it[1])} <small>· ${esc(it[0])} · ${it[2]}쪽</small></div>
+          <div class="seg" role="group" aria-label="${i + 1}번 항목 결과">
+            <button type="button" class="ok" data-m="ok" aria-pressed="${m === 'ok'}">적정</button>
+            <button type="button" class="bad" data-m="bad" aria-pressed="${m === 'bad'}">부적정</button>
+            <button type="button" class="na" data-m="na" aria-pressed="${m === 'na'}">해당없음</button>
+          </div>
+          ${m === 'bad' ? `<div class="fix"><label class="sr" for="fix${i}">조치사항</label><input type="text" id="fix${i}" data-fix="${i}" placeholder="조치사항 (예: 덮개 고정 후 재점검)" value="${esc(state.fixes[i] || '')}"></div>` : ''}
+        </li>`;
+      }).join("")}</ol>`;
+  $("#summary").hidden = false;
+  updateSummary();
+}
+function updateSummary() {
+  const cat = catById(state.cat);
+  const n = cat.items.length;
+  const v = Object.values(state.marks);
+  const ok = v.filter(x => x === "ok").length, bad = v.filter(x => x === "bad").length, na = v.filter(x => x === "na").length;
+  $("#cOk").textContent = ok; $("#cBad").textContent = bad; $("#cNa").textContent = na; $("#cNone").textContent = n - ok - bad - na;
+  const bads = cat.items.map((it, i) => [it, i]).filter(([, i]) => state.marks[i] === "bad");
+  $("#badBox").innerHTML = bads.length
+    ? `<b style="color:var(--bad)">조치 필요 ${bads.length}개</b><ul class="badlist">${bads.map(([it, i]) => `<li>${i + 1}. ${esc(it[1])}${state.fixes[i] ? ' → ' + esc(state.fixes[i]) : ''}</li>`).join("")}</ul>`
+    : (ok + na === n ? '<b style="color:var(--ok)">모든 항목 체크 완료, 부적정 없음</b>' : '');
+}
+$("#checklist").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-m]");
+  if (!b) return;
+  const i = +b.closest(".ck-item").dataset.i;
+  if (state.marks[i] === b.dataset.m) delete state.marks[i]; else state.marks[i] = b.dataset.m;
+  renderChecklist();
+  const again = document.querySelector(`.ck-item[data-i="${i}"] input`);
+  if (again) again.focus();
+});
+$("#checklist").addEventListener("input", (e) => {
+  const i = e.target.dataset.fix;
+  if (i === undefined) return;
+  state.fixes[i] = e.target.value;
+  updateSummary();
+});
+$("#resetBtn").onclick = () => { state.marks = {}; state.fixes = {}; renderChecklist(); toast("체크를 초기화했어요"); };
+$("#copyBtn").onclick = async () => {
+  const cat = catById(state.cat);
+  const s = SOURCES[cat.src];
+  const lab = { ok: "적정", bad: "부적정", na: "해당없음" };
+  const text = [
+    `[작업전 체크봇] ${cat.label} 작업 전 점검 결과`,
+    `현장: ${$("#site").value || "(미입력)"} / 날짜: ${$("#date").value}`,
+    ...cat.items.map((it, i) => `${i + 1}. [${lab[state.marks[i]] || "미체크"}] ${it[1]}${state.fixes[i] ? " → 조치: " + state.fixes[i] : ""}`),
+    `출처: ${s.org}, 「${s.name}」(${s.date})`,
+    `※ 참고용 시제품. 최종 판단은 현장 안전관리자.`
+  ].join("\n");
+  try { await navigator.clipboard.writeText(text); }
+  catch { const t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove(); }
+  toast("결과를 복사했어요");
+};
 
-$("checkDate").value = todayStr();
-renderTrades(); renderTasks(); renderExamples(); renderSaved();
+/* ===== 6. 시작 ===== */
+addMsg("bot", greeting());
+renderSuggest();
 </script>
 </body>
 </html>
