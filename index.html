@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>안전톡 체크 | 안전관리 체크리스트 Q&A</title>
+<meta name="description" content="작업 전 점검 체크리스트를 질문으로 찾고, 점검 결과를 저장하는 시제품">
+<style>
+  :root{
+    --bg:#f4f6f8; --card:#fff; --ink:#1c2733; --sub:#5b6875; --line:#dde3e9;
+    --main:#0b6b5a; --main-dark:#084c40; --main-soft:#e3f3ef;
+    --warn:#a85a00; --warn-soft:#fff1dc; --sample:#5b3fa8; --sample-soft:#efe9fb;
+    --ok:#1b7f3b; --ok-soft:#e1f4e7; --na:#546270; --na-soft:#e9edf1; --bad:#b3261e;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+    line-height:1.55;font-size:16px}
+  header{background:var(--main);color:#fff;padding:14px 16px}
+  header .wrap{max-width:760px;margin:0 auto}
+  header h1{margin:0;font-size:1.25rem}
+  header p{margin:2px 0 0;font-size:.85rem;opacity:.9}
+  nav{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+  nav .wrap{max-width:760px;margin:0 auto;display:flex}
+  nav button{flex:1;border:0;background:none;padding:13px 8px;font:inherit;font-weight:700;
+    color:var(--sub);border-bottom:3px solid transparent;cursor:pointer}
+  nav button[aria-selected="true"]{color:var(--main);border-bottom-color:var(--main)}
+  main{max-width:760px;margin:0 auto;padding:14px 14px 60px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  h2{font-size:1.05rem;margin:0 0 10px}
+  label,.lbl{display:block;font-weight:700;font-size:.92rem;margin:12px 0 6px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:9px 14px;font:inherit;
+    cursor:pointer;min-height:44px}
+  .chip[aria-pressed="true"]{background:var(--main);border-color:var(--main);color:#fff;font-weight:700}
+  select,input[type=text],input[type=date],textarea{width:100%;font:inherit;padding:11px 12px;border:1.5px solid var(--line);
+    border-radius:10px;background:#fff;color:var(--ink);min-height:46px}
+  textarea{resize:vertical;min-height:84px}
+  :focus-visible{outline:3px solid #f0a500;outline-offset:2px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:520px){.row{grid-template-columns:1fr}}
+  .examples{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .ex{border:1px dashed var(--main);background:var(--main-soft);color:var(--main-dark);border-radius:8px;
+    padding:8px 10px;font:inherit;font-size:.88rem;cursor:pointer;text-align:left;min-height:40px}
+  .btn{display:inline-block;border:0;background:var(--main);color:#fff;font:inherit;font-weight:700;
+    padding:13px 18px;border-radius:10px;cursor:pointer;min-height:48px}
+  .btn:hover{background:var(--main-dark)}
+  .btn.ghost{background:#fff;color:var(--main);border:1.5px solid var(--main)}
+  .btn.danger{background:#fff;color:var(--bad);border:1.5px solid var(--bad)}
+  .btn.block{width:100%;margin-top:16px}
+  .badge{display:inline-block;font-size:.76rem;font-weight:700;padding:3px 9px;border-radius:999px;margin-right:6px;vertical-align:middle}
+  .b-sample{background:var(--sample-soft);color:var(--sample)}
+  .b-warn{background:var(--warn-soft);color:var(--warn)}
+  .b-ok{background:var(--ok-soft);color:var(--ok)}
+  .summary{background:var(--main-soft);border-radius:10px;padding:12px 14px;margin:6px 0 12px}
+  .notfound{background:var(--warn-soft);border:1px solid #f0c98c;border-radius:10px;padding:14px}
+  ul.check{list-style:none;margin:0;padding:0}
+  ul.check li{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+  ul.check li.hit{border-color:var(--main);background:#f7fcfb}
+  .itxt{font-weight:700;margin-bottom:8px}
+  .itxt small{font-weight:400;color:var(--sub);display:block}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{flex:1;min-width:84px;border:1.5px solid var(--line);background:#fff;border-radius:8px;font:inherit;
+    padding:9px 6px;cursor:pointer;min-height:44px}
+  .seg button[aria-pressed="true"].s-ok{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:700}
+  .seg button[aria-pressed="true"].s-na{background:var(--na);border-color:var(--na);color:#fff;font-weight:700}
+  .seg button[aria-pressed="true"].s-no{background:var(--warn);border-color:var(--warn);color:#fff;font-weight:700}
+  .src{border-left:4px solid var(--sample);background:#faf8fe;padding:10px 12px;border-radius:0 8px 8px 0;
+    font-size:.88rem;margin-top:12px}
+  .count{font-size:.9rem;color:var(--sub);margin-top:10px}
+  .disc{font-size:.82rem;color:var(--sub);margin-top:14px}
+  .empty{text-align:center;color:var(--sub);padding:30px 10px}
+  .saved-item{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:#fff}
+  .saved-item h3{margin:0 0 4px;font-size:1rem}
+  .saved-item .meta{font-size:.85rem;color:var(--sub)}
+  .saved-item .acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .saved-item .acts .btn{padding:9px 14px;min-height:42px;font-size:.9rem}
+  .detail{margin-top:10px;font-size:.92rem}
+  .detail div{padding:6px 0;border-top:1px solid var(--line)}
+  .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#1c2733;color:#fff;
+    padding:12px 18px;border-radius:10px;font-size:.92rem;display:none;z-index:20;max-width:90%}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>안전톡 체크</h1>
+    <p>작업 전 점검 체크리스트 Q&amp;A · 점검 결과 저장 (시제품)</p>
+  </div>
+</header>
+<nav aria-label="화면 이동">
+  <div class="wrap" role="tablist">
+    <button role="tab" id="tab-ask" aria-selected="true" aria-controls="view-ask">질문하기</button>
+    <button role="tab" id="tab-saved" aria-selected="false" aria-controls="view-saved">저장된 점검 <span id="savedCount"></span></button>
+  </div>
+</nav>
+
+<main>
+  <!-- 1. 입력 화면 + 결과 화면 -->
+  <section id="view-ask" role="tabpanel" aria-labelledby="tab-ask">
+    <div class="card">
+      <h2>1. 작업 정보 입력</h2>
+      <div class="lbl" id="lblTrade">공종 선택</div>
+      <div class="chips" id="trades" role="group" aria-labelledby="lblTrade"></div>
+
+      <label for="task">작업 선택</label>
+      <select id="task"></select>
+
+      <label for="question">질문 입력</label>
+      <textarea id="question" placeholder="예: 고소작업 전에 뭘 확인해야 해?"></textarea>
+      <div class="examples" id="examples" aria-label="예시 질문"></div>
+
+      <div class="row">
+        <div>
+          <label for="siteName">점검 작업명 (저장용)</label>
+          <input type="text" id="siteName" placeholder="예: OO현장 2층 배관 작업" maxlength="60">
+        </div>
+        <div>
+          <label for="checkDate">점검 일자</label>
+          <input type="date" id="checkDate">
+        </div>
+      </div>
+      <button class="btn block" id="askBtn">질문하기</button>
+    </div>
+
+    <div id="result" class="hidden" aria-live="polite"></div>
+  </section>
+
+  <!-- 2. 저장된 점검 -->
+  <section id="view-saved" role="tabpanel" aria-labelledby="tab-saved" class="hidden">
+    <div class="card">
+      <h2>저장된 점검 목록</h2>
+      <p class="disc" style="margin-top:0">이 기기의 브라우저에만 저장돼요. 서버로 보내지 않아요.</p>
+      <div id="savedList"></div>
+    </div>
+  </section>
+
+  <p class="disc">
+    ※ 이 앱은 해커톤 시제품이에요. 화면의 체크항목은 <b>샘플 데이터</b>이며 ㈜동호엔지니어링의 실제 체크리스트나 법령 기준이 아니에요.
+    현장 최종 판단은 안전관리자가 하고, 실제 기준은 반드시 원문 자료로 확인하세요.
+  </p>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ===========================================================
+   샘플 데이터 (실습용 예시). 실제 기업 데이터·법령 기준이 아님.
+   기업 제공 자료를 받으면 이 DATA를 교체한다.
+   =========================================================== */
+const DATA_LABEL = "샘플 데이터";
+const SOURCE_NOTE = {
+  type: "샘플 데이터",
+  text: "팀이 만든 실습용 예시입니다. 출처 문서와 대조하기 전이라 근거는 '확인 필요'입니다.",
+  ref: "참고 후보(대조 전): 국토교통부 서울지방국토관리청 「건설공사 안전관리 매뉴얼(2024)」, 2024-06-11"
+};
+
+const TRADES = ["기계설비","전기","소방","정보통신","공통"];
+
+const TASKS = [
+  { id:"pipe", trade:"기계설비", name:"배관 설치",
+    keywords:["배관","파이프","밸브","용접","압력","시험","중량물","설치"],
+    items:[
+      "작업 구역 출입 통제 표시를 했는가",
+      "작업자 보호구(안전모, 장갑, 보안경) 착용 상태를 확인했는가",
+      "중량 자재 운반 방법과 양중 장비 상태를 확인했는가",
+      "용접·절단 작업이 있으면 화기 작업 준비를 확인했는가",
+      "압력 시험 전 접속부와 밸브 상태를 확인했는가"
+    ]},
+  { id:"boiler", trade:"기계설비", name:"보일러·펌프 설치",
+    keywords:["보일러","펌프","가스","환기","연통","냉난방","설치","중량물"],
+    items:[
+      "설치 위치의 환기 상태와 작업 공간을 확인했는가",
+      "가스·연료 배관 접속부 누출 점검 계획이 있는가",
+      "전원 차단과 잠금(표시) 조치를 확인했는가",
+      "중량 설비 운반·거치 경로와 인원 배치를 확인했는가"
+    ]},
+  { id:"wire", trade:"전기", name:"전기 배선 작업",
+    keywords:["배선","전선","전기","차단기","정전","잠금","감전","접지","케이블"],
+    items:[
+      "작업 전 전원 차단과 정전 확인을 했는가",
+      "차단기에 잠금·꼬리표 등 재투입 방지 조치를 했는가",
+      "절연 보호구와 절연 공구 상태를 확인했는가",
+      "젖은 장소나 금속 구조물 근처 작업 여부를 확인했는가",
+      "작업 종료 후 재송전 전 인원 철수를 확인했는가"
+    ]},
+  { id:"panel", trade:"전기", name:"분전반 점검",
+    keywords:["분전반","배전반","분전","차단기","감전","접지","점검"],
+    items:[
+      "분전반 전면 작업 공간이 확보되어 있는가",
+      "활선 접근 한계와 작업 방법을 팀원과 공유했는가",
+      "접지 상태 확인 방법을 정했는가",
+      "작업 중 비상 연락 체계를 확인했는가"
+    ]},
+  { id:"sprinkler", trade:"소방", name:"스프링클러 설치",
+    keywords:["스프링클러","소화","헤드","소방","배관","시험","천장","설치"],
+    items:[
+      "천장 내부 작업 구간의 추락·낙하 위험을 확인했는가",
+      "배관 지지와 고정 상태를 확인했는가",
+      "기존 소방설비를 정지할 경우 사전 협의와 표시를 했는가",
+      "통수·압력 시험 시 누수 대비 조치를 했는가"
+    ]},
+  { id:"hot", trade:"소방", name:"화기 작업 (용접·절단)",
+    keywords:["화기","용접","절단","불티","화재","소화기","감시자","불꽃"],
+    items:[
+      "작업 주변 가연물을 제거하거나 덮었는가",
+      "소화기가 작업 장소에 비치되어 있는가",
+      "화재 감시자를 지정했는가",
+      "작업 종료 후 잔불 여부를 확인할 시간과 방법을 정했는가"
+    ]},
+  { id:"cable", trade:"정보통신", name:"케이블 포설",
+    keywords:["케이블","통신","포설","천장","사다리","랙","배관","통신선"],
+    items:[
+      "사다리·작업발판 상태와 설치 방법을 확인했는가",
+      "기존 전력선과 통신선의 이격 여부를 확인했는가",
+      "케이블 운반·포설 중 걸림 위험 구간을 표시했는가",
+      "천장·덕트 내부 작업 시 조명과 비상 연락 방법을 확인했는가"
+    ]},
+  { id:"height", trade:"공통", name:"고소작업",
+    keywords:["고소","추락","사다리","안전대","비계","발판","높은","개구부","안전고리"],
+    items:[
+      "작업발판·사다리·비계의 설치와 고정 상태를 확인했는가",
+      "안전대를 착용하고 걸이 위치를 확인했는가",
+      "개구부와 단부에 덮개·난간이 있는가",
+      "하부 통행 제한과 낙하물 방지 조치를 했는가",
+      "기상 상태(바람, 비 등)에 따른 작업 가능 여부를 확인했는가"
+    ]},
+  { id:"tbm", trade:"공통", name:"작업 전 안전회의(TBM)",
+    keywords:["tbm","회의","위험성","보호구","작업 전","작업전","교육","건강","컨디션","조회"],
+    items:[
+      "오늘 작업 내용과 순서를 전원에게 설명했는가",
+      "작업별 위험요인과 대책을 함께 확인했는가",
+      "보호구 착용과 건강 상태를 확인했는가",
+      "비상 연락처와 대피 경로를 공유했는가"
+    ]}
+];
+
+const EXAMPLES = {
+  "기계설비":["배관 설치 전에 뭘 확인해야 해?","보일러 설치할 때 환기는 어떻게 확인해?"],
+  "전기":["전기 배선 작업 전에 정전 확인은 어떻게 해?","분전반 점검할 때 주의할 점은?"],
+  "소방":["스프링클러 설치 전 점검 항목 알려줘","용접 작업할 때 화재 예방은?"],
+  "정보통신":["케이블 포설 작업 전에 뭘 확인해?"],
+  "공통":["고소작업 전에 뭘 확인해야 해?","작업 전 안전회의에서 뭘 말해야 해?"]
+};
+
+/* ===================== 상태 / 유틸 ===================== */
+const $ = id => document.getElementById(id);
+const STORE_KEY = "safetalk-check-saved-v1";
+let state = { trade:"공통", taskId:null, current:null };
+
+let memStore = []; // 브라우저 저장소를 쓸 수 없을 때(예: 일부 보안 설정) 이 탭이 열려 있는 동안만 유지
+let usingMem = false;
+function loadSaved(){
+  if (usingMem) return memStore;
+  try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }catch(e){ usingMem = true; return memStore; }
+}
+function storeSaved(list){
+  if (!usingMem){
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(list)); return true; }catch(e){ usingMem = true; }
+  }
+  memStore = list; return true;
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.style.display = "block";
+  clearTimeout(toast._t); toast._t = setTimeout(()=>t.style.display="none", 2400);
+}
+function todayStr(){
+  const d = new Date(), p = n => String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
+}
+
+/* ===================== 입력 화면 ===================== */
+function renderTrades(){
+  $("trades").innerHTML = TRADES.map(t =>
+    `<button type="button" class="chip" data-trade="${t}" aria-pressed="${t===state.trade}">${t}</button>`).join("");
+  $("trades").querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => {
+    state.trade = b.dataset.trade; renderTrades(); renderTasks(); renderExamples();
+  }));
+}
+function renderTasks(){
+  const list = TASKS.filter(t => t.trade === state.trade);
+  $("task").innerHTML = `<option value="">(작업을 고르지 않음)</option>` +
+    list.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join("");
+  $("task").value = list.some(t=>t.id===state.taskId) ? state.taskId : "";
+  state.taskId = $("task").value || null;
+}
+function renderExamples(){
+  const ex = EXAMPLES[state.trade] || [];
+  $("examples").innerHTML = ex.map(q => `<button type="button" class="ex">${esc(q)}</button>`).join("");
+  $("examples").querySelectorAll(".ex").forEach(b => b.addEventListener("click", () => {
+    $("question").value = b.textContent; ask();
+  }));
+}
+
+/* ===================== 질문 → 답 찾기 ===================== */
+function score(task, q){
+  const text = q.toLowerCase().replace(/\s+/g," ");
+  let s = 0;
+  if (text.includes(task.name.toLowerCase())) s += 3;
+  task.keywords.forEach(k => { if (text.includes(k.toLowerCase())) s += 2; });
+  task.items.forEach(it => {
+    it.split(/[\s(),·]+/).forEach(w => { if (w.length >= 2 && text.includes(w.toLowerCase())) s += 0.5; });
+  });
+  return s;
+}
+function findAnswer(){
+  const q = $("question").value.trim();
+  const picked = TASKS.find(t => t.id === state.taskId);
+  if (!q && !picked) return {kind:"empty"};
+  if (!q && picked) return {kind:"task", task:picked, q:"", hits:[]};
+  // 질문이 있으면 선택한 공종 안에서 먼저, 없으면 전체에서 찾는다
+  const pool = picked ? [picked] : TASKS.filter(t => t.trade === state.trade);
+  let ranked = pool.map(t => ({t, s:score(t,q)})).sort((a,b)=>b.s-a.s);
+  if (!picked && (!ranked[0] || ranked[0].s < 2)){
+    ranked = TASKS.map(t => ({t, s:score(t,q)})).sort((a,b)=>b.s-a.s);
+  }
+  if (!ranked[0] || ranked[0].s < 2){
+    return {kind:"none", q, suggestions: TASKS.filter(t=>t.trade===state.trade).map(t=>t.name)};
+  }
+  const best = ranked[0].t;
+  const low = q.toLowerCase();
+  const hits = best.items.map((it,i)=>({i, hit: it.split(/[\s(),·]+/).some(w => w.length>=2 && low.includes(w.toLowerCase()))}))
+                         .filter(x=>x.hit).map(x=>x.i);
+  return {kind:"task", task:best, q, hits};
+}
+
+function ask(){
+  const ans = findAnswer();
+  const box = $("result");
+  box.classList.remove("hidden");
+  if (ans.kind === "empty"){
+    state.current = null;
+    box.innerHTML = `<div class="card"><div class="notfound"><span class="badge b-warn">확인 필요</span>
+      공종과 작업을 고르거나 질문을 입력해 주세요.</div></div>`;
+    return;
+  }
+  if (ans.kind === "none"){
+    state.current = null;
+    const sug = ans.suggestions.map(n=>`<li>${esc(n)}</li>`).join("");
+    box.innerHTML = `<div class="card"><h2>2. 결과</h2><div class="notfound">
+      <span class="badge b-warn">확인 필요</span><b>등록된 자료에서 맞는 항목을 찾지 못했어요.</b>
+      <p style="margin:8px 0 0">추측해서 답하지 않았어요. 담당 안전관리자나 원문 자료로 확인해 주세요.</p>
+      ${sug ? `<p style="margin:10px 0 4px">${esc(state.trade)} 공종에 등록된 작업:</p><ul style="margin:0;padding-left:20px">${sug}</ul>`:""}
+      </div></div>`;
+    return;
+  }
+  const task = ans.task;
+  state.current = { taskId:task.id, taskName:task.name, trade:task.trade, question:ans.q,
+    marks: task.items.map(()=> "") };
+  const hitSet = new Set(ans.hits);
+  const summary = ans.q
+    ? `"${esc(ans.q)}" 질문에 가장 가까운 작업은 <b>${esc(task.name)}</b>(${esc(task.trade)})예요. 작업 전 확인 항목 ${task.items.length}개를 보여드려요.`
+    : `<b>${esc(task.name)}</b>(${esc(task.trade)}) 작업 전 확인 항목 ${task.items.length}개예요.`;
+  box.innerHTML = `
+    <div class="card">
+      <h2>2. 결과</h2>
+      <span class="badge b-sample">${DATA_LABEL}</span><span class="badge b-warn">근거 확인 필요</span>
+      <div class="summary">${summary}${hitSet.size?`<br><small>질문과 관련 있는 항목은 초록 테두리로 표시했어요.</small>`:""}</div>
+      <ul class="check" id="checkList">
+        ${task.items.map((it,i)=>`
+        <li class="${hitSet.has(i)?"hit":""}" data-i="${i}">
+          <div class="itxt">${i+1}. ${esc(it)}</div>
+          <div class="seg" role="group" aria-label="${i+1}번 항목 점검 결과">
+            <button type="button" class="s-ok" data-v="확인" aria-pressed="false">확인</button>
+            <button type="button" class="s-na" data-v="해당 없음" aria-pressed="false">해당 없음</button>
+            <button type="button" class="s-no" data-v="미확인" aria-pressed="false">미확인</button>
+          </div>
+        </li>`).join("")}
+      </ul>
+      <div class="count" id="progress"></div>
+      <div class="src"><b>근거</b> <span class="badge b-sample">${SOURCE_NOTE.type}</span><br>
+        ${esc(SOURCE_NOTE.text)}<br><small>${esc(SOURCE_NOTE.ref)}</small></div>
+      <button class="btn block" id="saveBtn">점검 결과 저장</button>
+    </div>`;
+  box.querySelectorAll("#checkList li").forEach(li => {
+    const i = +li.dataset.i;
+    li.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+      const v = b.dataset.v;
+      state.current.marks[i] = (state.current.marks[i] === v) ? "" : v;
+      li.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.v === state.current.marks[i])));
+      updateProgress();
+    }));
+  });
+  $("saveBtn").addEventListener("click", saveResult);
+  updateProgress();
+  box.scrollIntoView({behavior:"smooth", block:"start"});
+}
+function updateProgress(){
+  if (!state.current) return;
+  const m = state.current.marks, done = m.filter(Boolean).length;
+  $("progress").textContent = `표시한 항목 ${done} / ${m.length}  (확인 ${m.filter(x=>x==="확인").length}, 해당 없음 ${m.filter(x=>x==="해당 없음").length}, 미확인 ${m.filter(x=>x==="미확인").length})`;
+}
+
+/* ===================== 점검 결과 저장 ===================== */
+function saveResult(){
+  if (!state.current) return;
+  const marks = state.current.marks;
+  if (!marks.some(Boolean)){ toast("항목을 하나 이상 표시한 뒤 저장해 주세요."); return; }
+  const task = TASKS.find(t => t.id === state.current.taskId);
+  const rec = {
+    id: Date.now(),
+    date: $("checkDate").value || todayStr(),
+    siteName: $("siteName").value.trim() || "(작업명 없음)",
+    trade: task.trade, taskName: task.name,
+    question: state.current.question,
+    items: task.items.map((it,i)=>({text:it, mark: marks[i] || "미표시"})),
+    dataType: DATA_LABEL
+  };
+  const list = loadSaved(); list.unshift(rec);
+  storeSaved(list);
+  toast(usingMem ? "저장했어요. (브라우저 저장소를 쓸 수 없어 이 탭을 닫으면 사라져요)" : "저장했어요. '저장된 점검'에서 볼 수 있어요.");
+  renderSaved();
+}
+function renderSaved(){
+  const list = loadSaved();
+  $("savedCount").textContent = list.length ? `(${list.length})` : "";
+  if (!list.length){
+    $("savedList").innerHTML = `<div class="empty">저장된 점검이 없어요.<br>질문하기 화면에서 점검 결과를 저장해 보세요.</div>`;
+    return;
+  }
+  $("savedList").innerHTML = list.map(r => {
+    const c = k => r.items.filter(x=>x.mark===k).length;
+    return `<div class="saved-item" data-id="${r.id}">
+      <h3>${esc(r.siteName)}</h3>
+      <div class="meta">${esc(r.date)} · ${esc(r.trade)} · ${esc(r.taskName)} <span class="badge b-sample">${esc(r.dataType)}</span></div>
+      <div class="meta">확인 ${c("확인")} · 해당 없음 ${c("해당 없음")} · 미확인 ${c("미확인")} · 미표시 ${c("미표시")}</div>
+      <div class="detail hidden">${r.items.map((x,i)=>`<div>${i+1}. ${esc(x.text)} <b>[${esc(x.mark)}]</b></div>`).join("")}</div>
+      <div class="acts">
+        <button type="button" class="btn ghost" data-act="toggle">자세히 보기</button>
+        <button type="button" class="btn danger" data-act="del">삭제</button>
+      </div>
+    </div>`;
+  }).join("") + `<button type="button" class="btn danger" id="clearAll" style="margin-top:6px">전체 삭제</button>`;
+  $("savedList").querySelectorAll(".saved-item").forEach(el => {
+    el.querySelector('[data-act="toggle"]').addEventListener("click", e => {
+      const d = el.querySelector(".detail"); d.classList.toggle("hidden");
+      e.target.textContent = d.classList.contains("hidden") ? "자세히 보기" : "접기";
+    });
+    el.querySelector('[data-act="del"]').addEventListener("click", () => {
+      if (!confirm("이 점검 기록을 삭제할까요?")) return;
+      storeSaved(loadSaved().filter(r => String(r.id) !== el.dataset.id)); renderSaved();
+    });
+  });
+  $("clearAll").addEventListener("click", () => {
+    if (!confirm("저장된 점검 기록을 모두 삭제할까요?")) return;
+    storeSaved([]); renderSaved();
+  });
+}
+
+/* ===================== 화면 전환 / 시작 ===================== */
+function show(which){
+  const ask = which === "ask";
+  $("view-ask").classList.toggle("hidden", !ask);
+  $("view-saved").classList.toggle("hidden", ask);
+  $("tab-ask").setAttribute("aria-selected", String(ask));
+  $("tab-saved").setAttribute("aria-selected", String(!ask));
+  if (!ask) renderSaved();
+}
+$("tab-ask").addEventListener("click", () => show("ask"));
+$("tab-saved").addEventListener("click", () => show("saved"));
+$("askBtn").addEventListener("click", ask);
+$("task").addEventListener("change", () => { state.taskId = $("task").value || null; });
+$("question").addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) ask(); });
+
+$("checkDate").value = todayStr();
+renderTrades(); renderTasks(); renderExamples(); renderSaved();
+</script>
+</body>
+</html>
