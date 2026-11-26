@@ -167,12 +167,12 @@
   .pr-sign div { padding: 5px 8px 14px; border-right: 1px solid #333; font-size: 9pt; }
   .pr-sign div:last-child { border-right: 0; }
   .pr-note { margin-top: 6px; color: #555; font-size: 8pt; line-height: 1.4; }
-  .pr-foot { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; font-size: 7.8pt; color: #666; border-top: 1px solid #bbb; padding-top: 3px; background: #fff; }
+  .pr-foot { position: fixed; bottom: -13mm; left: 0; right: 0; display: flex; justify-content: space-between; font-size: 7.8pt; color: #666; border-top: 1px solid #bbb; padding-top: 3px; background: #fff; }
   @media print {
     html, body { background: #fff !important; }
     body > *:not(#printRoot) { display: none !important; }
     #printRoot { display: block; position: static !important; left: auto !important; width: auto !important; }
-    @page { size: A4 portrait; margin: 12mm 12mm 14mm; }
+    @page { size: A4 portrait; margin: 12mm 12mm 18mm; }
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
   .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #1d2530; color: #fff; padding: 10px 16px; border-radius: 99px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 20; }
@@ -1985,17 +1985,20 @@ function buildPrintDoc(cat) {
 function exportPdf(cat) {
   if (!cat || cat.nodata) { toast("이 작업은 등록된 점검표가 없어 PDF를 만들 수 없어요"); return; }
   if (state.cat !== cat.id) openChecklist(cat, false);
-  $("#printRoot").innerHTML = buildPrintDoc(cat);
+  const html = buildPrintDoc(cat);
   const oldTitle = document.title;
   document.title = "안전톡톡이_" + cat.label.replace(/[\\/:*?"<>|]/g, "") + "_" + ($("#date").value || "");
   const done = () => { document.title = oldTitle; $("#printRoot").innerHTML = ""; window.removeEventListener("afterprint", done); };
   window.addEventListener("afterprint", done);
-  toast("인쇄 창에서 '대상: PDF로 저장'을 선택하세요");
-  const wait = currentLang === "ko" ? Promise.resolve() : new Promise(res => {
-    const root = $("#printRoot"), before = root.textContent; let n = 0;
-    const t = setInterval(() => { n++; if (root.querySelector("font") || root.textContent !== before || n > 32) { clearInterval(t); setTimeout(res, 500); } }, 250);
+  toast(currentLang === "ko" ? "인쇄 창에서 '대상: PDF로 저장'을 선택하세요" : "Preparing the translated PDF… choose 'Save as PDF' in the print dialog");
+  // 번역 모드에서는 번역이 되는 숨은 무대에서 먼저 번역한 뒤 인쇄 영역으로 복사
+  const holder = document.createElement("div");
+  holder.innerHTML = html;
+  stageTranslate(holder).then(() => {
+    $("#printRoot").innerHTML = holder.innerHTML;
+    if (holder.parentNode) holder.remove();
+    setTimeout(() => window.print(), 250);
   });
-  setTimeout(() => wait.then(() => window.print()), 250);
 }
 $("#pdfBtn").onclick = () => exportPdf(catById(state.cat));
 $("#resetBtn").onclick = () => { state.marks = {}; state.fixes = {}; renderChecklist(); toast("체크를 초기화했어요"); };
