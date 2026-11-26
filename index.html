@@ -138,7 +138,7 @@
   .brandfoot { margin: 14px 0 0; text-align: center; }
   .brandfoot img { max-width: min(340px, 80%); height: auto; border-radius: 12px; background: #fff; border: 1px solid var(--line); }
   /* ===== 인쇄용 점검표(PDF) ===== */
-  #printRoot { display: none; }
+  #printRoot { position: absolute; left: -9999px; top: 0; width: 190mm; }
   .pr { font-family: "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #111; font-size: 10pt; line-height: 1.45; }
   .pr-head { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #ffd402; padding-bottom: 6px; margin-bottom: 10px; }
   .pr-head img { height: 36px; width: auto; }
@@ -171,7 +171,7 @@
   @media print {
     html, body { background: #fff !important; }
     body > *:not(#printRoot) { display: none !important; }
-    #printRoot { display: block; }
+    #printRoot { display: block; position: static !important; left: auto !important; width: auto !important; }
     @page { size: A4 portrait; margin: 12mm 12mm 14mm; }
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
@@ -236,10 +236,10 @@
     <div id="checklist"><div class="empty">아직 열린 점검표가 없어요. 챗봇에게 작업을 말해 보세요.</div></div>
     <div class="summary" id="summary" hidden>
       <div class="stats">
-        <div class="stat ok"><b id="cOk">0</b>적정</div>
-        <div class="stat bad"><b id="cBad">0</b>부적정</div>
-        <div class="stat na"><b id="cNa">0</b>해당없음</div>
-        <div class="stat none"><b id="cNone">0</b>미체크</div>
+        <div class="stat ok"><b id="cOk">0</b><span class="notranslate" translate="no" data-mk="ok">적정</span></div>
+        <div class="stat bad"><b id="cBad">0</b><span class="notranslate" translate="no" data-mk="bad">부적정</span></div>
+        <div class="stat na"><b id="cNa">0</b><span class="notranslate" translate="no" data-mk="na">해당없음</span></div>
+        <div class="stat none"><b id="cNone">0</b><span class="notranslate" translate="no" data-mk="none">미체크</span></div>
       </div>
       <div id="badBox"></div>
       <div class="actions">
@@ -1719,7 +1719,7 @@ function checklistStatus() {
   const ok = v.filter(x => x === "ok").length, bad = v.filter(x => x === "bad").length, na = v.filter(x => x === "na").length;
   const none = cat.items.length - ok - bad - na;
   const bads = cat.items.map((it, i) => [it, i]).filter(([, i]) => state.marks[i] === "bad");
-  return `<p><b>${esc(cat.label)}</b> 점검 현황: 적정 ${ok} · 부적정 ${bad} · 해당없음 ${na} · 미체크 ${none}</p>` +
+  return `<p><b>${esc(cat.label)}</b> 점검 현황: <span class="notranslate" translate="no">${markLabel("ok")} ${ok} · ${markLabel("bad")} ${bad} · ${markLabel("na")} ${na} · ${markLabel("none")} ${none}</span></p>` +
     (bads.length ? `<p>조치가 필요한 항목:</p><ol>${bads.map(([it, i]) => `<li value="${i + 1}">${esc(it[1])}${state.fixes[i] ? ` → ${esc(state.fixes[i])}` : ""}</li>`).join("")}</ol>` : "") +
     (none ? `<p>아직 체크하지 않은 항목이 ${none}개 있어요.</p>` : `<p>모든 항목을 체크했어요.</p>`) +
     `<div class="quick"><button type="button" class="primary" data-act="goCheck">점검표로 이동</button></div>`;
@@ -1901,9 +1901,9 @@ function renderChecklist() {
         return `<li class="ck-item ${m ? 's-' + m : ''}" data-i="${i}">
           <div class="ck-text">${i + 1}. ${esc(it[1])} <small>· ${esc(it[0])} · ${it[2]}쪽</small></div>
           <div class="seg" role="group" aria-label="${i + 1}번 항목 결과">
-            <button type="button" class="ok" data-m="ok" aria-pressed="${m === 'ok'}">적정</button>
-            <button type="button" class="bad" data-m="bad" aria-pressed="${m === 'bad'}">부적정</button>
-            <button type="button" class="na" data-m="na" aria-pressed="${m === 'na'}">해당없음</button>
+            <button type="button" class="ok notranslate" translate="no" data-m="ok" aria-pressed="${m === 'ok'}">${markLabel('ok')}</button>
+            <button type="button" class="bad notranslate" translate="no" data-m="bad" aria-pressed="${m === 'bad'}">${markLabel('bad')}</button>
+            <button type="button" class="na notranslate" translate="no" data-m="na" aria-pressed="${m === 'na'}">${markLabel('na')}</button>
           </div>
           ${m === 'bad' ? `<div class="fix"><label class="sr" for="fix${i}">조치사항</label><input type="text" id="fix${i}" data-fix="${i}" placeholder="조치사항 (예: 덮개 고정 후 재점검)" value="${esc(state.fixes[i] || '')}"></div>` : ''}
         </li>`;
@@ -1938,12 +1938,22 @@ $("#checklist").addEventListener("input", (e) => {
   updateSummary();
 });
 
+/* 적정·부적정 같은 판정 라벨은 번역기가 오역("적정"->titration)해서 직접 사전으로 표시 */
+const MARK = {
+  ko: { ok: "적정", bad: "부적정", na: "해당없음", none: "미체크" },
+  en: { ok: "OK", bad: "Not OK", na: "N/A", none: "Unchecked" },
+  "zh-CN": { ok: "合格", bad: "不合格", na: "不适用", none: "未检查" }
+};
+const markLabel = (k) => (MARK[currentLang] || MARK.ko)[k];
+function applyMarkLabels() {
+  document.querySelectorAll("[data-mk]").forEach(el => { el.textContent = markLabel(el.dataset.mk); });
+}
 /* ===== 5-1. PDF 점검표 (브라우저 인쇄 → PDF로 저장, AI·토큰 사용 없음) ===== */
 function buildPrintDoc(cat) {
   const s = SOURCES[cat.src];
   const marks = state.cat === cat.id ? state.marks : {};
   const fixes = state.cat === cat.id ? state.fixes : {};
-  const lab = { ok: "적정", bad: "부적정", na: "해당없음" };
+  const lab = { ok: markLabel("ok"), bad: markLabel("bad"), na: markLabel("na") };
   // 같은 구분(소분류)이 이어지면 한 칸으로 합침(rowspan)
   const runs = []; cat.items.forEach((it, i) => { const last = runs[runs.length - 1]; if (last && last.g === it[0]) last.n++; else runs.push({ g: it[0], start: i, n: 1 }); });
   const rows = cat.items.map((it, i) => {
@@ -1951,7 +1961,7 @@ function buildPrintDoc(cat) {
     const m = marks[i] || "";
     return `<tr>${run ? `<td class="g" rowspan="${run.n}">${esc(run.g)}</td>` : ""}
       <td>${i + 1}. ${esc(it[1])} <span class="pg">· ${esc(it[2])}쪽</span>${m === "bad" && fixes[i] ? `<div class="fx">조치: ${esc(fixes[i])}</div>` : ""}</td>
-      <td class="r ${m}">${m ? lab[m] : ""}</td><td class="c"></td><td class="c"></td><td class="c"></td></tr>`;
+      <td class="r ${m} notranslate" translate="no">${m ? lab[m] : ""}</td><td class="c"></td><td class="c"></td><td class="c"></td></tr>`;
   }).join("");
   const v = Object.values(marks), ok = v.filter(x => x === "ok").length, bad = v.filter(x => x === "bad").length, na = v.filter(x => x === "na").length;
   const none = cat.items.length - ok - bad - na;
@@ -1966,7 +1976,7 @@ function buildPrintDoc(cat) {
     </div>
     <div class="pr-meta"><div><small>현장명 (작업명)</small>${esc(site) || "&nbsp;"}</div><div><small>점검 일자</small>${esc(date) || "&nbsp;"}</div><div><small>점검자 (서명)</small>&nbsp;</div></div>
     <table class="pr-t"><thead><tr><th>구 분</th><th>자율점검 항목</th><th>결과</th><th>책임자</th><th>관리<br>감독자</th><th>작업자</th></tr></thead><tbody>${rows}</tbody></table>
-    <div class="pr-sum"><b>점검 결과</b> 적정 ${ok} · 부적정 ${bad} · 해당없음 ${na} · 미체크 ${none} (총 ${cat.items.length}개 항목)</div>
+    <div class="pr-sum"><b>점검 결과</b> <span class="notranslate" translate="no">${markLabel("ok")} ${ok} · ${markLabel("bad")} ${bad} · ${markLabel("na")} ${na} · ${markLabel("none")} ${none}</span> (총 ${cat.items.length}개 항목)</div>
     <div class="pr-sign"><div>책임자 확인<br>(서명)</div><div>관리감독자 확인<br>(서명)</div><div>안전관리자 최종 확인<br>(서명)</div></div>
     <div class="pr-note">※ 해커톤 시제품에서 출력한 참고용 점검표입니다. 항목 문구는 원문을 그대로 옮기되 줄바꿈과 머리말만 정리했으며, 쪽수는 원문 기준입니다. 최종 판단은 현장 안전관리자가 하고, 법령 조항은 현행 여부를 원문으로 확인하세요.</div>
     <div class="pr-foot"><span>안전톡톡이 · NEXTON · 2026 NI2.0 AID 해커톤 1팀</span><span>${esc(cat.label)} · ${esc(date)}</span></div>
@@ -1981,7 +1991,11 @@ function exportPdf(cat) {
   const done = () => { document.title = oldTitle; $("#printRoot").innerHTML = ""; window.removeEventListener("afterprint", done); };
   window.addEventListener("afterprint", done);
   toast("인쇄 창에서 '대상: PDF로 저장'을 선택하세요");
-  setTimeout(() => window.print(), currentLang === "ko" ? 250 : 2200);
+  const wait = currentLang === "ko" ? Promise.resolve() : new Promise(res => {
+    const root = $("#printRoot"), before = root.textContent; let n = 0;
+    const t = setInterval(() => { n++; if (root.querySelector("font") || root.textContent !== before || n > 32) { clearInterval(t); setTimeout(res, 500); } }, 250);
+  });
+  setTimeout(() => wait.then(() => window.print()), 250);
 }
 $("#pdfBtn").onclick = () => exportPdf(catById(state.cat));
 $("#resetBtn").onclick = () => { state.marks = {}; state.fixes = {}; renderChecklist(); toast("체크를 초기화했어요"); };
@@ -2019,6 +2033,7 @@ function setLang(l, silent) {
   // 외국어에서는 한국어 키워드 검색이 안 되므로 AI 검색(다국어)을 자동으로 켠다
   if (l !== "ko" && typeof AI_ENDPOINT !== "undefined" && AI_ENDPOINT && !$("#aiToggle").disabled) { $("#aiToggle").checked = true; chat.ai = true; }
   applyLang(l, 0);
+  applyMarkLabels(); if (state.cat) renderChecklist();
   if (!silent) toast(l === "ko" ? "한국어로 표시해요" : l === "en" ? "Translating to English (auto)" : "正在自动翻译为中文");
 }
 function googleTranslateElementInit() {
@@ -2034,6 +2049,7 @@ $("#langSel").addEventListener("change", (e) => setLang(e.target.value));
   document.head.appendChild(s);
 })();
 
+applyMarkLabels();
 /* ===== 6. 시작 ===== */
 $("#statusTxt").textContent = "● 점검표 " + CATS.filter(c => !c.nodata).length + "종 등록 · 항목 " + CATS.reduce((n, c) => n + c.items.length, 0) + "개";
 addMsg("bot", greeting());
