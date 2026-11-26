@@ -250,6 +250,7 @@
       </div>
     </div>
   </section>
+  <div id="stage" aria-hidden="true" style="position:absolute;left:-9999px;top:0;width:560px;pointer-events:none"><p style="margin:0">&nbsp;</p></div>
 </main>
 
 <footer class="wrap">
@@ -1625,10 +1626,37 @@ function rankItems(cat, q) {
 /* ===== 4. 챗봇 ===== */
 const chat = { last: null, busy: false };
 const log = $("#log");
-function addMsg(role, html) {
+function botEl(html) {
   const d = document.createElement("div");
-  d.className = "msg " + role;
-  d.innerHTML = role === "bot" ? `<img class="avatar" src="logo-avatar.webp" alt="" aria-hidden="true"><div class="bubble">${html}</div>` : `<div class="bubble">${html}</div>`;
+  d.className = "msg bot";
+  d.innerHTML = `<img class="avatar" src="logo-avatar.webp" alt="" aria-hidden="true"><div class="bubble">${html}</div>`;
+  return d;
+}
+/* 구글 번역 위젯은 #log 안에 나중에 추가된 글을 번역하지 못해서, 번역이 되는 숨은 무대(#stage)에서 먼저 번역한 뒤 대화창으로 옮긴다 */
+function stageTranslate(el) {
+  if (currentLang === "ko") return Promise.resolve();
+  const st = document.getElementById("stage");
+  if (!st) return Promise.resolve();
+  st.appendChild(el);
+  const before = el.textContent;
+  return new Promise(res => {
+    let n = 0;
+    const t = setInterval(() => {
+      n++;
+      const done = el.querySelector("font") || el.textContent !== before;
+      if (done || n > 28) { clearInterval(t); setTimeout(res, done ? 250 : 0); }
+    }, 250);
+  });
+}
+let msgChain = Promise.resolve();
+function addMsg(role, html) {
+  if (role === "bot" && currentLang !== "ko" && !/class="typing"/.test(html)) {
+    const el = botEl(html);
+    msgChain = msgChain.then(() => stageTranslate(el)).then(() => { log.appendChild(el); log.scrollTop = log.scrollHeight; });
+    return el;
+  }
+  const d = role === "bot" ? botEl(html) : document.createElement("div");
+  if (role !== "bot") { d.className = "msg " + role; d.innerHTML = `<div class="bubble">${html}</div>`; }
   log.appendChild(d);
   log.scrollTop = log.scrollHeight;
   return d;
@@ -1803,8 +1831,10 @@ async function send(text) {
     if (r) { html = r.html; sugg = r.sugg; }
     else { await sleepMs(300); html = '<p class="mini">AI 서버에 연결하지 못해 기본 모드(등록 점검표)로 답할게요.</p>' + reply(q); }
   } else { await sleepMs(450); html = reply(q); }
-  const bubble = typing.querySelector(".bubble");
-  bubble.innerHTML = html;
+  const finalEl = botEl(html);
+  await stageTranslate(finalEl);
+  typing.replaceWith(finalEl);
+  const bubble = finalEl.querySelector(".bubble");
   if (sugg) {
     const f = document.createElement("iframe");
     f.setAttribute("sandbox", "allow-popups allow-popups-to-escape-sandbox");
