@@ -92,6 +92,15 @@
   .bubble sup a { color: var(--brand); text-decoration: none; font-weight: 700; }
   .mini { font-size: .8rem; color: var(--sub); }
   .warnbox { background: var(--warn-soft); border: 1px solid #f3d29b; border-radius: 10px; padding: 8px 10px; margin: 4px 0; }
+  .company { border: 1px solid var(--line, #d7deea); background: #f7faff; border-radius: 12px; padding: 12px 14px; margin: 10px 0 12px; }
+  .company label { display: block; font-weight: 700; margin-bottom: 6px; }
+  .company label small { font-weight: 400; color: #5a6a85; }
+  .co-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .co-row input { flex: 1 1 180px; min-width: 0; }
+  .co-row button { font: inherit; border-radius: 10px; padding: 8px 14px; min-height: 40px; cursor: pointer; border: 1px solid var(--brand); background: var(--brand); color: #fff; }
+  .co-row button.ghost { background: #fff; color: var(--brand); }
+  .co-row button:disabled { opacity: .6; cursor: wait; }
+  #coResult .quick button.rec { background: #fff8d6; border-color: #e0b800; color: #5a4600; font-weight: 700; }
   .quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .quick button { font: inherit; font-size: .85rem; border: 1px solid var(--brand); color: var(--brand); background: #fff; border-radius: 99px; padding: 6px 11px; cursor: pointer; min-height: 36px; }
   .quick button.primary { background: var(--brand); color: #fff; }
@@ -209,6 +218,11 @@
   <section class="card" id="chatSection" aria-labelledby="qa-title">
     <h2 id="qa-title"><span class="step">1</span>체크리스트 Q&amp;A 챗봇</h2>
     <p class="hint">오늘 할 작업이나 궁금한 점을 물어보세요. 이어서 물어봐도 앞 대화의 작업을 기억합니다. 오른쪽 위 <b>AI 검색</b>을 켜면 구글 검색 출처까지 붙여서 답해요.</p>
+    <div class="company" id="companyBox">
+      <label for="company">업체명 <small>(선택) 입력하면 구글에서 사업 분야를 찾아 맞는 점검표를 먼저 보여줘요</small></label>
+      <div class="co-row"><input id="company" type="text" maxlength="40" placeholder="예) (주)○○에너지" autocomplete="off"><button type="button" id="coGo">업체 맞춤 추천</button><button type="button" id="coClear" class="ghost" hidden>지우기</button></div>
+      <div id="coResult" aria-live="polite"></div>
+    </div>
     <div class="chat">
       <div class="chat-head">
         <img class="avatar" src="logo-avatar.webp" alt="" aria-hidden="true">
@@ -1612,6 +1626,7 @@ function findCat(q) {
     const lc = c.label.toLowerCase().replace(/\s+/g, "");
     if (lc.length >= 2 && qc.includes(lc)) s += 2 + lc.length * 0.01;
     if (c.nodata) s = s * 0.99;
+    if (s > 0 && isRec(c)) s += 0.5;
     if (s > bestScore) { best = c; bestScore = s; }
   }
   return best;
@@ -1631,6 +1646,11 @@ function rankItems(cat, q) {
 }
 
 /* ===== 4. 챗봇 ===== */
+const CO_KEY = "safetalk-company";
+const co = { name: "", summary: "", ids: [], sources: [], found: false };
+try { Object.assign(co, JSON.parse(localStorage.getItem(CO_KEY) || "{}")); } catch (e) {}
+const coIds = () => (co.ids || []).filter(id => { const c = catById(id); return c && !c.nodata; });
+const isRec = (c) => coIds().includes(c.id);
 const chat = { last: null, busy: false };
 const log = $("#log");
 function botEl(html) {
@@ -1679,12 +1699,16 @@ function groupBtns(list) {
     return `<button type="button" data-act="grp" data-grp="${esc(g)}">${esc(g)} <span class="nodata" style="color:inherit;opacity:.7">${n}</span></button>`;
   }).join("")}</div>`;
 }
+function recButtons() {
+  const ids = coIds();
+  return ids.length ? `<p class="mini" style="margin:8px 0 2px"><b>★ ${esc(co.name)} 맞춤 추천</b></p><div class="quick">${ids.map(id => { const c = catById(id); return `<button type="button" class="rec" data-say="${esc(c.label)} 작업 점검항목 알려줘">★ ${esc(c.label)}</button>`; }).join("")}</div>` : "";
+}
 function catButtons(exclude) {
-  return `<p class="mini" style="margin:8px 0 2px"><b>설비·신재생 공종</b></p>${groupBtns(TRADE_GROUPS)}<p class="mini" style="margin:10px 0 2px"><b>토목·시공 공종</b></p>${groupBtns(CIVIL_GROUPS)}`;
+  return recButtons() + `<p class="mini" style="margin:8px 0 2px"><b>설비·신재생 공종</b></p>${groupBtns(TRADE_GROUPS)}<p class="mini" style="margin:10px 0 2px"><b>토목·시공 공종</b></p>${groupBtns(CIVIL_GROUPS)}`;
 }
 function catsOfGroup(g) {
-  return `<div class="quick">${CATS.filter(c => inGroup(c, g)).map(c =>
-    `<button type="button" data-say="${esc(c.label)} 작업 점검항목 알려줘">${esc(c.label)}${c.nodata ? '<span class="nodata">자료 없음</span>' : ''}</button>`).join("")}</div>`;
+  return `<div class="quick">${CATS.filter(c => inGroup(c, g)).sort((a, b) => isRec(b) - isRec(a)).map(c =>
+    `<button type="button"${isRec(c) ? ' class="rec"' : ""} data-say="${esc(c.label)} 작업 점검항목 알려줘">${isRec(c) ? "★ " : ""}${esc(c.label)}${c.nodata ? '<span class="nodata">자료 없음</span>' : ''}</button>`).join("")}</div>`;
 }
 function itemList(cat, list) {
   return `<ol>${list.map(({ it, i }) => `<li value="${i + 1}"><span class="grp">${esc(it[0])}</span>${esc(it[1])}<br>${srcBadge(cat, it[2])}</li>`).join("")}</ol>`;
@@ -1778,6 +1802,7 @@ function aiData(q) {
       for (const k of c.keys) { const kc = k.toLowerCase().replace(/\s+/g, ""); if (kc && qc.includes(kc)) s += kc.length >= 4 ? 3 : kc.length >= 3 ? 2 : 1; }
       if (qc.includes(c.label.toLowerCase().replace(/\s+/g, ""))) s += 5;
       if (chat.last === c.id) s += 2;
+      if (s > 0 && isRec(c)) s += 1;
     }
     return { c, s };
   });
@@ -1808,7 +1833,7 @@ async function askAI(q) {
   const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 30000);
   try {
     const res = await fetch(AI_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, signal: ctl.signal,
-      body: JSON.stringify({ question: q, history: chat.hist.slice(-6), data: aiData(q), lang: currentLang }) });
+      body: JSON.stringify({ question: q, history: chat.hist.slice(-6), data: aiData(q), lang: currentLang, company: co.found && co.name ? co.name + (co.summary ? ": " + co.summary : "") : "" }) });
     if (!res.ok) throw new Error("HTTP " + res.status);
     const out = await res.json();
     if (!out.answer) throw new Error("빈 응답");
@@ -1867,7 +1892,8 @@ function renderSuggest() {
   const c = catById(chat.last);
   const base = ["스프링클러 점검할 때 뭘 확인해?", "지붕 위 태양광 설치 전 확인할 것은?", "보일러 작업 자율점검 알려줘", "활선·통신선로 작업 안전수칙은?", "커튼월 설치 안전수칙은?", "굴착 사면 기울기 기준은?", "흙막이 계측은 뭘 확인해?", "콘크리트 타설 전 동바리 점검은?", "A형 사다리 몇 미터까지 돼?", "타워크레인 풍속 기준은?", "맨홀 산소 농도 기준은?", "장마철 현장 점검할 것은?", "가설전기 감전 예방은?", "출처 알려줘"];
   const follow = c && !c.nodata ? ["자격은?", "보호구는?", "점검표 열어줘", "결과 알려줘"] : [];
-  $("#suggest").innerHTML = [...follow, ...base].map(s => `<button type="button" data-say="${esc(s)}">${esc(s)}</button>`).join("");
+  const recChips = coIds().slice(0, 3).map(id => { const c2 = catById(id); return `<button type="button" class="rec" data-say="${esc(c2.label)} 작업 점검항목 알려줘">★ ${esc(c2.label)}</button>`; }).join("");
+  $("#suggest").innerHTML = recChips + [...follow, ...base].map(s => `<button type="button" data-say="${esc(s)}">${esc(s)}</button>`).join("");
 }
 log.addEventListener("click", (e) => {
   const b = e.target.closest("button");
@@ -2062,6 +2088,50 @@ $("#langSel").addEventListener("change", (e) => setLang(e.target.value));
 })();
 
 applyMarkLabels();
+/* ===== 5-2. 업체 맞춤 추천 ===== */
+function renderCompany() {
+  const el = $("#coResult"), has = !!co.name;
+  $("#coClear").hidden = !has;
+  if (!has) { el.innerHTML = ""; renderSuggest(); return; }
+  const ids = coIds();
+  const srcs = (co.sources || []).filter(s => safeUrl(s.uri)).slice(0, 3).map(s => `<a href="${esc(safeUrl(s.uri))}" target="_blank" rel="noopener noreferrer">${esc(s.title || "출처")}</a>`).join(" · ");
+  el.innerHTML = co.found
+    ? `<p class="mini" style="margin:8px 0 2px"><b class="notranslate" translate="no">${esc(co.name)}</b> · ${esc(co.summary || "")}</p>` +
+      (ids.length ? `<div class="quick">${ids.map(id => { const c = catById(id); return `<button type="button" class="rec" data-say="${esc(c.label)} 작업 점검항목 알려줘">★ ${esc(c.label)}</button>`; }).join("")}</div>` : "") +
+      `<p class="mini" style="margin:6px 0 0">AI가 구글 검색으로 추정한 결과예요. 다른 회사로 찾았다면 업체명을 더 정확히 적어 주세요.${srcs ? " 출처: " + srcs : ""}</p>`
+    : `<p class="mini" style="margin:8px 0 0"><b class="notranslate" translate="no">${esc(co.name)}</b> 업체 정보를 확실하게 찾지 못했어요. 기본 점검표 목록으로 보여드릴게요. (업체명을 더 정확히 적어 보세요)</p>`;
+  renderSuggest();
+}
+async function lookupCompany() {
+  const name = $("#company").value.trim().slice(0, 40);
+  if (!name) { toast("업체명을 입력해 주세요"); return; }
+  if (!AI_ENDPOINT) { toast("AI 서버가 연결돼 있지 않아요"); return; }
+  const btn = $("#coGo"); btn.disabled = true; const old = btn.textContent; btn.textContent = "찾는 중…";
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 30000);
+  try {
+    const res = await fetch(AI_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, signal: ctl.signal,
+      body: JSON.stringify({ mode: "company", company: name, cats: CATS.filter(c => !c.nodata).map(c => ({ id: c.id, label: c.label, group: c.group })) }) });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const out = await res.json();
+    if (out.error) throw new Error(out.error);
+    Object.assign(co, { name: name, found: !!out.found, summary: out.summary || "", ids: out.ids || [], sources: out.sources || [] });
+    try { localStorage.setItem(CO_KEY, JSON.stringify(co)); } catch (e) {}
+    renderCompany();
+    if (co.found && coIds().length) addMsg("bot", `<p><b class="notranslate" translate="no">${esc(name)}</b>의 사업 분야에 맞춰 점검표를 먼저 골랐어요. ★ 표시가 있는 점검표부터 확인해 보세요.</p>` + recButtons());
+    else addMsg("bot", `<p>${esc(name)} 업체 정보를 확실하게 찾지 못해서 기본 순서로 보여드릴게요.</p>`);
+  } catch (e) {
+    toast("업체 정보를 찾지 못했어요. 잠시 후 다시 시도해 주세요");
+  } finally { clearTimeout(timer); btn.disabled = false; btn.textContent = old; }
+}
+$("#coGo").addEventListener("click", lookupCompany);
+$("#company").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); lookupCompany(); } });
+$("#coClear").addEventListener("click", () => {
+  Object.assign(co, { name: "", summary: "", ids: [], sources: [], found: false });
+  try { localStorage.removeItem(CO_KEY); } catch (e) {}
+  $("#company").value = ""; renderCompany(); toast("업체 맞춤 추천을 지웠어요");
+});
+if (co.name) $("#company").value = co.name;
+renderCompany();
 /* ===== 6. 시작 ===== */
 $("#statusTxt").textContent = "● 점검표 " + CATS.filter(c => !c.nodata).length + "종 등록 · 항목 " + CATS.reduce((n, c) => n + c.items.length, 0) + "개";
 addMsg("bot", greeting());
